@@ -44,22 +44,24 @@ import seaborn as sns
 import sys
 sys.path.insert(0, '/Users/julienballbe/My_Work/My_Librairies/Electrophy_treatment.py')
 import Electrophy_treatment as ephys_treat
+import Fit_library as fitlib
 
 #%%
 ctc= CellTypesCache(manifest_file="/Users/julienballbe/My_Work/Allen_Data/Common_Script/Full_analysis_cell_types/manifest.json")
 #%%
+
+
 def data_pruning (stim_freq_table):
     
-    stim_freq_table.sort_values(by=["Cell_id", 'Stim_amp_pA','Frequency_Hz'])
-    
+    stim_freq_table=stim_freq_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
     frequency_array=np.array(stim_freq_table.loc[:,'Frequency_Hz'])
-    
-    
     step_array=np.diff(frequency_array)
+    
     if np.count_nonzero(frequency_array)<4:
         obs='Less_than_4_response'
         do_fit=False
         return obs,do_fit
+    
     if np.count_nonzero(step_array)<3 :
         obs='Less_than_3_different_frequencies'
         do_fit=False
@@ -68,8 +70,10 @@ def data_pruning (stim_freq_table):
     first_non_zero=np.flatnonzero(frequency_array)[0]
     stim_array=np.array(stim_freq_table.loc[:,'Stim_amp_pA'])[first_non_zero:]
     stimulus_span=stim_array[-1]-stim_array[0]
+    
     if stimulus_span<100.:
         obs='Stimulus_span_lower_than_100pA'
+        do_fit=False
         return obs,do_fit
     
     count,bins=np.histogram(stim_array,
@@ -88,81 +92,28 @@ def data_pruning (stim_freq_table):
     do_fit=True
     return obs,do_fit
 
-def extract_stim_freq(Cell_id,species_sweep_stim_table,per_time=False,first_x_ms=0,per_nth_spike=False,first_nth_spike=0):
-    '''
-    Function to extract for each specified Cell_id and the corresponding stimulus the frequency of the response
-    Frequency is defined as the number of spikes divided by the time between the stimulus start and the time of the specified index
-    Parameters
-    ----------
-    Cell_id : int
 
-    
-    Returns
-    -------
-    f_I_table : DataFrame
-        DataFrame with a column "Cell_id"(factor),the sweep number (int),the stimulus amplitude in pA(float),and the computed frequency of the response (float).
-    '''
-    
-    f_I_table = pd.DataFrame(columns=['Cell_id', 'Sweep_number', 'Stim_amp_pA', 'Frequency_Hz'])
-    
-    my_Cell_data = ctc.get_ephys_data(Cell_id)
-    
-    cell_stim_spike_table=extract_stim_spike_times_table(Cell_id,mouse_sweep_stim_table,do_save=False)
-
-    for current_line in range(cell_stim_spike_table.shape[0]):
-        current_sweep=cell_stim_spike_table.iloc[current_line,1]
-
-        
-        stim_start_time=cell_stim_spike_table.iloc[current_line,3]
-        spike_times=cell_stim_spike_table.iloc[current_line,5]
+def data_pruning_adaptation (SF_table,response_time):
+    maximum_nb_interval =0
+    sweep_list=np.array(SF_table.loc[:,"Sweep"])
+    for current_sweep in sweep_list:
         
         
-        if len(spike_times) <1:
-            freq = 0
-
-        else :
-            if per_nth_spike==True:
-                reshaped_spike_times=spike_times[:first_nth_spike]
-    
-                t_last_spike = reshaped_spike_times[-1]
-
-                freq=len(reshaped_spike_times)/((t_last_spike - stim_start_time))
-
-            elif per_time==True:
-                end_time=stim_start_time+(first_x_ms*1e-3)
-
-                reshaped_spike_times=spike_times[spike_times <= end_time ]
-                nb_spike = len(reshaped_spike_times)
-
-                if nb_spike !=0:
-                    
-                    freq=nb_spike/(first_x_ms*1e-3)
-                else:
-                    freq=0
-        new_line = pd.Series([int(Cell_id), current_sweep,
-                              my_Cell_data.get_sweep_metadata(current_sweep)['aibs_stimulus_amplitude_pa'],
-                              freq],
-                             index=['Cell_id', 'Sweep_number', 'Stim_amp_pA', 'Frequency_Hz'])
-        f_I_table = f_I_table.append(new_line, ignore_index=True)
-    
-    freq_array=f_I_table.iloc[:,3].values
-
-    step_array=np.diff(f_I_table.loc[:,"Frequency_Hz"])
-    
-    f_I_table = f_I_table.sort_values(by=["Cell_id", 'Stim_amp_pA'])
-    f_I_table['Cell_id'] = pd.Categorical(f_I_table['Cell_id'])
-    f_I_table['Sweep_number']=np.int64(f_I_table['Sweep_number'])
-
-    f_I_table=f_I_table.sort_values(by=["Cell_id", 'Stim_amp_pA'])
-    if np.count_nonzero(freq_array)==0 or np.count_nonzero(freq_array)<4 or np.count_nonzero(step_array)<3 :
+        df=pd.DataFrame(SF_table.loc[current_sweep,'SF'])
+        df=df[df['Feature']=='Upstroke']
+        nb_spikes=(df[df['Time_s']<(SF_table.loc[current_sweep,'Stim_start_s']+response_time)].shape[0])
+        
+        if nb_spikes>maximum_nb_interval:
+            maximum_nb_interval=nb_spikes
+    if maximum_nb_interval<4:
         do_fit=False
-        return f_I_table,do_fit
-    
+        adapt_obs='Less_than_4_intervals_at_most'
     else:
         do_fit=True
-    return f_I_table,do_fit
-    
-    
+        adapt_obs='-'
+    return adapt_obs,do_fit
+
+
     
 def import_spike_time_table(cell_id,original_database):
     if original_database=='Lantyer':
@@ -390,7 +341,7 @@ def create_full_TPC_SF_table(cell_id,database):
             
             TPC=TPC[TPC['Time_s']<(stim_end_time+.05)]
             TPC=TPC[TPC['Time_s']>(stim_start_time-.05)]
-
+            TPC=TPC.reset_index(drop=True)
             new_line=pd.Series([current_sweep,TPC],index=['Sweep','TPC'])
             full_TPC_table=full_TPC_table.append(new_line,ignore_index=True)
             
@@ -428,60 +379,147 @@ def create_full_TPC_SF_table(cell_id,database):
         
 
     
-def create_metadata_table(cell_id,database,population_class,species_sweep_stim_table):
-    metadata_table=pd.DataFrame(columns=["Database","Area","Layer","Input_Resistance_MOhm","Dendrite_type",'Min_stimulus',"Max_stim"])
+def create_metadata_table(cell_id,database,population_class,species_sweep_stim_table,full_TPC,full_SF):
+    metadata_table=pd.DataFrame(columns=["Database",
+                          "Area",
+                          "Layer",
+                          "Input_Resistance_provided_MOhm",
+                          "Input_Resistance_computed_MOhm",
+                          "Input_Resistance_computed_SD_MOhm",
+                          "Time_cst_provided_ms",
+                          "Time_cst_computed_ms",
+                          "Time_cst_computed_SD_ms"
+                          "Dendrite_type"])
     population_class.index=population_class.loc[:,"Cell_id"]
     if database=="Allen":
         cell_data=ctc.get_ephys_features(cell_id)
         cell_data=cell_data[cell_data["specimen_id"]==cell_id]
         cell_data.index=cell_data.loc[:,'specimen_id']
-        IR=cell_data.loc[cell_id,"ri"]
-        stim_freq_table,do_fit=extract_stim_freq(cell_id,species_sweep_stim_table,per_time=True,first_x_ms=5)
-        min_stim=min(stim_freq_table.loc[:,'Stim_amp_pA'])
-        max_stim=max(stim_freq_table.loc[:,'Stim_amp_pA'])
-        database='Allen'
+        IR_provided=cell_data.loc[cell_id,"ri"]
+        Time_cst_provided=cell_data.loc[cell_id,'tau']
+        IR_computed,IR_computed_sd,Time_cst_computed,Time_cst_computed_sd=ephys_treat.compute_input_resistance_time_cst(full_TPC,full_SF)
+        
+
         population_class_line=population_class[population_class["Cell_id"]==str(cell_id)]
-
-
         Area=population_class.loc[str(cell_id),"General_area"]
         Layer=population_class_line.loc[str(cell_id),"Layer"]
         dendrite_type=population_class_line.loc[str(cell_id),"Dendrite_type"]
         
+    
+    
+    elif database=='Lantyer':
+        population_class_line=population_class[population_class["Cell_id"]==str(cell_id)]
+        Area=population_class.loc[str(cell_id),"General_area"]
+        Layer=population_class_line.loc[str(cell_id),"Layer"]
+        dendrite_type=population_class_line.loc[str(cell_id),"Dendrite_type"]
+        IR_provided=np.nan
+        Time_cst_provided=np.nan
+        IR_computed,IR_computed_sd,Time_cst_computed,Time_cst_computed_sd=ephys_treat.compute_input_resistance_time_cst(full_TPC,full_SF)
+        
+        
+        
     new_line=pd.Series([database,
                         Area,
                         Layer,
-                        IR,
-                        dendrite_type,
-                        min_stim,
-                        max_stim],index=["Database","Area","Layer","Input_Resistance_MOhm","Dendrite_type",'Min_stimulus',"Max_stim"])
+                        IR_provided,
+                        IR_computed,
+                        IR_computed_sd,
+                        Time_cst_provided,
+                        Time_cst_computed,
+                        Time_cst_computed_sd,
+                        dendrite_type],index=["Database",
+                                              "Area",
+                                              "Layer",
+                                              "Input_Resistance_provided_MOhm",
+                                              "Input_Resistance_computed_MOhm",
+                                              "Input_Resistance_computed_SD_MOhm",
+                                              "Time_cst_provided_ms",
+                                              "Time_cst_computed_ms",
+                                              "Time_cst_computed_SD_ms",
+                                              "Dendrite_type"])
     metadata_table=metadata_table.append(new_line,ignore_index=True)
     return metadata_table
         
 
 
 def create_cell_json(cell_id,database,population_class_file,species_sweep_stim_table):
-    if database=='Allen':
-        TPC,SF_table=create_full_TPC_SF_table(cell_id,database)
+
+    TPC,SF_table=create_full_TPC_SF_table(cell_id,database)
+    
+    time_response_list=[.005,.010,.025,.050,.100,.250,.500]
+    
+    fit_columns=['Cell_id','Response_time_ms','I_O_obs','I_O_QNRMSE','Hill_amplitude','Hill_coef','Hill_Half_cst','Adaptation_obs','Adaptation_RMSE','A','B','C']
+    cell_fit_table=pd.DataFrame(columns=fit_columns)
+    
+    feature_columns=['Cell_id','Response_time_ms','Gain','Threshold','Saturation','Adaptation_index']
+    cell_feature_table=pd.DataFrame(columns=feature_columns)
+    
+    for response_time in time_response_list:
+
+        stim_freq_table=fitlib.get_stim_freq_table(SF_table,response_time)
+        #return stim_freq_table
+        pruning_obs,do_fit=data_pruning(stim_freq_table)
+        if do_fit ==True:
+            I_O_obs,Hill_Amplitude,Hill_coef,Hill_Half_cst,I_O_QNRMSE,x_shift,Gain,Threshold,Saturation=fitlib.fit_IO_curve(stim_freq_table,do_plot=False)
+        else:
+            I_O_obs=pruning_obs
+            empty_array=np.empty(8)
+            empty_array[:]=np.nan
+            Hill_Amplitude,Hill_coef,Hill_Half_cst,I_O_QNRMSE,x_shift,Gain,Threshold,Saturation=empty_array
+            
+        adapt_obs,adapt_do_fit=data_pruning_adaptation(SF_table, response_time)
+
+        if adapt_do_fit==True:
+            inst_freq_table=fitlib.extract_inst_freq_table(SF_table,response_time)
+
+            Adaptation_obs,A,Adaptation_index,C,Adaptation_RMSE=fitlib.fit_adaptation_curve(inst_freq_table,do_plot=False)
+        else:
+            Adaptation_obs=adapt_obs
+            empty_array=np.empty(4)
+            empty_array[:]=np.nan
+            A,Adaptation_index,C,Adaptation_RMSE=empty_array
+        new_fit_table_line=pd.Series([str(cell_id),
+                                      response_time,
+                                      I_O_obs,
+                                      I_O_QNRMSE,
+                                      Hill_Amplitude,
+                                      Hill_coef,
+                                      Hill_Half_cst,
+                                      Adaptation_obs,
+                                      Adaptation_RMSE,
+                                      A,
+                                      Adaptation_index,
+                                      C],index=fit_columns)
         
-        cell_fit_table=pd.read_csv(str('/Users/julienballbe/My_Work/Allen_Data/Cell_Fit_table/'+str(cell_id)+'_Fit_table.csv'))
-        cell_fit_table.index=cell_fit_table.loc[:,"Response_time_ms"]
+        cell_fit_table=cell_fit_table.append(new_fit_table_line,ignore_index=True)
         
-        cell_feature_table=pd.read_csv(str('/Users/julienballbe/My_Work/Allen_Data/Cell_Features_table/'+str(cell_id)+'_Features_table.csv'))
-        cell_feature_table.index=cell_feature_table.loc[:,'Response_time_ms']
+        new_feature_table_line=pd.Series([str(cell_id),
+                                          response_time,
+                                          Gain,
+                                          Threshold,
+                                          Saturation,
+                                          Adaptation_index],index=feature_columns)
         
-        metadata_table=create_metadata_table(cell_id,database,population_class_file,species_sweep_stim_table)
-        my_dict={'Metadata':[metadata_table],
-                 'TPC':[TPC],
-                 'Spike_feature_table':[SF_table],
-                 'Fit_table':[cell_fit_table],
-                 'IO_table':[cell_feature_table]}
+        cell_feature_table=cell_feature_table.append(new_feature_table_line,ignore_index=True)
         
+        
+
+    cell_fit_table.index=cell_fit_table.loc[:,"Response_time_ms"]
+    cell_feature_table.index=cell_feature_table.loc[:,'Response_time_ms']
+
+    metadata_table=create_metadata_table(cell_id,database,population_class_file,species_sweep_stim_table,TPC,SF_table)
+    my_dict={'Metadata':[metadata_table],
+             'TPC':[TPC],
+             'Spike_feature_table':[SF_table],
+             'Fit_table':[cell_fit_table],
+             'IO_table':[cell_feature_table]}
+    
     my_dict=pd.DataFrame(my_dict)
     my_dict.to_json(str('/Users/julienballbe/Downloads/Data_test_'+str(cell_id)+'.json'))
         
     
     
-#%%
+
 def get_traces(cell_id,sweep_id,database):
     
     if database=='Allen':
@@ -500,6 +538,7 @@ def get_traces(cell_id,sweep_id,database):
     elif database=='Lantyer':
         
         sweep_stim_table=pd.read_pickle('/Users/julienballbe/My_Work/Lantyer_Data/ID_Sweep_stim_table.pkl')
+
         sweep_stim_table=sweep_stim_table[sweep_stim_table['Cell_id']==cell_id]
         file_name=sweep_stim_table.iloc[0,0]
         sweep_stim_table=pd.DataFrame(sweep_stim_table.iloc[0,2])

@@ -38,7 +38,7 @@ import sys
 from sklearn.metrics import mean_squared_error
 
 import logging
-
+import Fit_library as fitlib
 #%%
 
 
@@ -784,3 +784,242 @@ def plot_trace(TPC_table,feature_table,potential_derivative,stim_start,stim_end)
     my_plot+=xlim(stim_start,stim_end)
     
     return my_plot
+
+def compute_input_resistance_time_cst(TPC_table,SF_table):
+    sweep_id_list=np.array(TPC_table.loc[:,'Sweep'])
+    TPC_table['Membrane_baseline_mV']=np.nan
+    TPC_table['Membrane_SS_mV']=np.nan
+    TPC_table['Stimulus_baseline_pA']=np.nan
+    TPC_table['Stimulus_amplitude_pA']=np.nan
+    TPC_table['Time_cst_ms']=np.nan
+    for current_sweep in sweep_id_list:
+        current_SF=pd.DataFrame(SF_table.loc[current_sweep,'SF'])
+        if current_SF.shape[0]==0:
+            current_TPC=pd.DataFrame(TPC_table.loc[current_sweep,'TPC'])
+            membrane_trace=current_TPC.loc[:,'Membrane_potential_mV']
+            time_trace=current_TPC.loc[:,'Time_s']
+            stim_trace=current_TPC.loc[:,'Input_current_pA']
+            stim_start_time=SF_table.loc[current_sweep,'Stim_start_s']
+            stim_end_time=SF_table.loc[current_sweep,'Stim_end_s']
+            stim_amplitude=SF_table.loc[current_sweep,'Stim_amp_pA']
+            start_idx = np.argmin(abs(time_trace - stim_start_time))
+            end_idx = np.argmin(abs(time_trace - stim_end_time))
+            
+            membrane_baseline=np.mean(membrane_trace[:start_idx])
+            
+            best_A,best_tau,membrane_SS=fitlib.fit_membrane_trace(current_TPC,stim_start_time,stim_end_time,do_plot=False)
+            TPC_table.loc[current_sweep,'Membrane_baseline_mV']=membrane_baseline
+            TPC_table.loc[current_sweep,'Membrane_SS_mV']=membrane_SS
+            TPC_table.loc[current_sweep,'Stimulus_baseline_pA']=np.mean(stim_trace[:start_idx])
+            TPC_table.loc[current_sweep,'Stimulus_amplitude_pA']=stim_amplitude
+            TPC_table.loc[current_sweep,'Time_cst_ms']=best_tau*1e3 #convert s to ms
+            
+    Input_resistance=np.mean((TPC_table.loc[:,"Stimulus_amplitude_pA"]-TPC_table.loc[:,"Stimulus_baseline_pA"])/(TPC_table.loc[:,"Membrane_SS_mV"]-TPC_table.loc[:,"Membrane_baseline_mV"]))*1e3
+    IR_sd=np.std((TPC_table.loc[:,"Stimulus_amplitude_pA"]-TPC_table.loc[:,"Stimulus_baseline_pA"])/(TPC_table.loc[:,"Membrane_SS_mV"]-TPC_table.loc[:,"Membrane_baseline_mV"]))*1e3
+    
+    Time_cst=np.mean(TPC_table.loc[:,"Time_cst_ms"])
+    Time_cst_sd=np.std(TPC_table.loc[:,'Time_cst_ms'])
+    return Input_resistance,IR_sd,Time_cst,Time_cst_sd
+
+
+def estimate_bridge_error(TPC_table,stim_amplitude,stim_start_time,stim_end_time):
+    
+    
+    TPC_table=TPC_table.reset_index(drop=True)
+    point_table=pd.DataFrame(columns=["Time_s","Membrane_potential_mV","Feature"])
+    current_derivative=calculate_dvdt(TPC_table.loc[:,'Input_current_pA'],TPC_table.loc[:,'Time_s'])
+    current_derivative=np.insert(current_derivative,0,current_derivative[0])
+    TPC_table["Input_current_derivative_pA/s"]=current_derivative
+    
+    
+    stimulus_start_table=TPC_table[TPC_table["Time_s"]<(stim_start_time+.005)]
+    stimulus_start_table=stimulus_start_table[stimulus_start_table['Time_s']>(stim_start_time-.005)]
+    
+    potential_trace=np.array(stimulus_start_table.loc[:,'Membrane_potential_mV'])
+    time_array=np.array(stimulus_start_table.loc[:,'Time_s'])
+    start_time_index = np.argmin(abs(time_array - stim_start_time))
+    end_time_index = np.argmin(abs(time_array - stim_end_time))
+    stimulus_baseline=np.mean(TPC_table.loc[:(start_time_index-1),'Input_current_pA'])
+    current_derivative=np.array(stimulus_start_table.loc[:,'Input_current_derivative_pA/s'])
+    #print("baseline=",stimulus_baseline)
+    #determine T_trans
+    if stim_amplitude <= stimulus_baseline:
+
+        min_dI_dt = np.nanmin((np.array(stimulus_start_table.loc[:,'Input_current_derivative_pA/s'])))
+        max_abs_dI_dt_index = np.argmin(abs(current_derivative - min_dI_dt))
+    elif stim_amplitude>stimulus_baseline:
+
+        max_dI_dt = np.nanmax((np.array(stimulus_start_table.loc[:,'Input_current_derivative_pA/s'])))
+        max_abs_dI_dt_index = np.argmin(abs(current_derivative - max_dI_dt))
+        print("max_abs_dI_dt_index=",max_abs_dI_dt_index)
+        
+    T_trans=time_array[max_abs_dI_dt_index]
+    T_trans_line=pd.Series([T_trans,potential_trace[max_abs_dI_dt_index],'T_trans'],index=["Time_s","Membrane_potential_mV","Feature"])
+    point_table=point_table.append(T_trans_line,ignore_index=True)
+    #determine DT_trans
+    print('T_trans=',T_trans)
+    ## get time of the max (min) dV/dt, for a positive (negative) Istep, respectively
+    potential_derivative_trace=np.array(stimulus_start_table.loc[:,'Potential_first_time_derivative_mV/s'])
+    if stim_amplitude <= stimulus_baseline:
+        min_dV_dt=np.nanmin(((np.array(stimulus_start_table.loc[:,'Potential_first_time_derivative_mV/s']))))
+        min_dV_dt_index=np.argmin(abs(potential_derivative_trace - min_dV_dt))
+        time_max_abs_dV_dt=time_array[min_dV_dt_index]
+        DT_trans_line=pd.Series([time_max_abs_dV_dt,potential_trace[min_dV_dt_index],'DT_trans_min_dV_dt'],index=["Time_s","Membrane_potential_mV","Feature"])
+        
+    elif stim_amplitude > stimulus_baseline:
+        
+        max_dV_dt=np.nanmax(((np.array(stimulus_start_table.loc[:,'Potential_first_time_derivative_mV/s']))))
+        max_dV_dt_index=np.argmin(abs(potential_derivative_trace - max_dV_dt))
+        print("max_dV_dt_index=",max_dV_dt_index)
+        
+        time_max_abs_dV_dt=time_array[max_dV_dt_index]
+        print("time_max_abs_dV_dt=",time_max_abs_dV_dt)
+        DT_trans_line=pd.Series([time_max_abs_dV_dt,potential_trace[max_dV_dt_index],'DT_trans_max_dV_dt'],index=["Time_s","Membrane_potential_mV","Feature"])
+    
+    point_table=point_table.append(DT_trans_line,ignore_index=True)
+    
+    sub_potential_derivative_trace=potential_derivative_trace[:max_abs_dI_dt_index]
+    
+    
+    if stim_amplitude <= stimulus_baseline:
+
+        for reversed_index,elt in enumerate(sub_potential_derivative_trace[::-1][1:]):
+            previous_elt=sub_potential_derivative_trace[::-1][reversed_index]
+            if previous_elt >=0 and elt<0:
+                last_zero_crossing_index=len(sub_potential_derivative_trace)-1-reversed_index
+                break
+            
+            
+    elif stim_amplitude > stimulus_baseline:
+        
+        for reversed_index,elt in enumerate(sub_potential_derivative_trace[::-1][1:]):
+            previous_elt=sub_potential_derivative_trace[::-1][reversed_index]
+            if previous_elt <=0 and elt>0:
+                last_zero_crossing_index=len(sub_potential_derivative_trace)-1-reversed_index
+                break
+         
+    time_zero_crossing=time_array[last_zero_crossing_index]
+    DT_trans_line=pd.Series([time_zero_crossing,potential_trace[last_zero_crossing_index],'DT_trans_zero_crossing_dV_dt'],index=["Time_s","Membrane_potential_mV","Feature"])
+    point_table=point_table.append(DT_trans_line,ignore_index=True)
+    DT_trans=max(abs(T_trans-time_max_abs_dV_dt),abs(T_trans-time_zero_crossing))
+    print('time_max_abs_dV_dt=',time_max_abs_dV_dt)
+    print('time_zero_crossing=',time_zero_crossing)
+    print('last_zero_crossing_index=',last_zero_crossing_index)
+    #Get fit table : [T_trans+2.5*DT_trans; T_trans+2.5*DT_trans+ 5*DT_trans ]
+
+    fit_table=TPC_table[TPC_table["Time_s"]<(T_trans+2.5*DT_trans+ 5*DT_trans)]
+    fit_table=fit_table[fit_table['Time_s']>(T_trans+2.5*DT_trans)]
+    print("T_trans+2.5*DT_trans=",T_trans+2.5*DT_trans)
+    print("T_trans+2.5*DT_trans+ 5*DT_trans=",T_trans+2.5*DT_trans+ 5*DT_trans)
+    
+    
+    print(fit_table.iloc[:,:3])
+    a,b,c,RMSE_poly=fitlib.fit_second_order_poly(fit_table,do_plot=False)
+    A,tau,RMSE_expo=fitlib.fit_exponential(fit_table,do_plot=False)
+    
+    Post_trans_Init_Value_table=TPC_table[TPC_table["Time_s"]<(T_trans+2.5*DT_trans+ 5*DT_trans)]
+    Post_trans_Init_Value_table=Post_trans_Init_Value_table[Post_trans_Init_Value_table['Time_s']>=T_trans]
+
+    if RMSE_poly<=RMSE_expo:
+        backward_prediction=a*((Post_trans_Init_Value_table.loc[:,'Time_s'])**2)+b*Post_trans_Init_Value_table.loc[:,'Time_s']+c
+        Post_trans_init_value=a*((T_trans)**2)+b*T_trans+c
+        
+        backward_table=pd.DataFrame(np.column_stack((Post_trans_Init_Value_table.loc[:,'Time_s'],backward_prediction)),columns=["Time_s","Membrane_potential_mV"])
+        backward_table['Legend']='Fit_curve'
+        
+    elif RMSE_poly>RMSE_expo:
+        backward_prediction=A*(np.exp(-(Post_trans_Init_Value_table.loc[:,'Time_s'])/tau))
+        Post_trans_init_value=A*(np.exp(-(T_trans)/tau))
+        backward_table=pd.DataFrame(np.column_stack((Post_trans_Init_Value_table.loc[:,'Time_s'],backward_prediction)),columns=["Time_s","Membrane_potential_mV"])
+        backward_table['Legend']='Fit_curve' 
+        
+    post_trans_init_value_line=pd.Series([T_trans,Post_trans_init_value,'Post_trans_init_value'],index=["Time_s","Membrane_potential_mV","Feature"])
+    point_table=point_table.append(post_trans_init_value_line,ignore_index=True)
+
+    
+    PreTrans_Est_table=TPC_table[TPC_table["Time_s"]<=(T_trans-.001)]
+    PreTrans_Est_table=PreTrans_Est_table[PreTrans_Est_table['Time_s']>(T_trans-.01)]
+    
+    
+    a_bis,b_bis,c_bis,RMSE_poly_bis=fitlib.fit_second_order_poly(PreTrans_Est_table,do_plot=False)
+
+    
+    Pre_Trans_Final_Value=a_bis*((PreTrans_Est_table.iloc[-1,0])**2)+b_bis*PreTrans_Est_table.iloc[-1,0]+c_bis
+    Pre_trans_Est_pred=a_bis*((PreTrans_Est_table.loc[:,"Time_s"])**2)+b_bis*PreTrans_Est_table.loc[:,"Time_s"]+c_bis
+    
+    PreTrans_Est_table=pd.DataFrame(np.column_stack((PreTrans_Est_table.loc[:,"Time_s"],Pre_trans_Est_pred)),columns=["Time_s","Membrane_potential_mV"])
+    PreTrans_Est_table['Legend']='PreTrans_Est'
+    
+    Pre_trans_final_value_line=pd.Series([PreTrans_Est_table.iloc[-1,0],Pre_Trans_Final_Value,'Pre_Trans_Final_Value'],index=["Time_s","Membrane_potential_mV","Feature"])
+    point_table=point_table.append(Pre_trans_final_value_line,ignore_index=True)
+    Fit_table=pd.concat([backward_table, PreTrans_Est_table], axis=0)
+    
+    Bridge_Error= (Post_trans_init_value-Pre_Trans_Final_Value)/(stim_amplitude-stimulus_baseline)
+
+    
+    my_plot=ggplot(TPC_table,aes(x='Time_s',y='Membrane_potential_mV'))+geom_line(color='black')
+    my_plot+=geom_line(Fit_table,aes(x='Time_s',y='Membrane_potential_mV',color='Legend')) 
+    my_plot+= geom_line(backward_table,aes(x='Time_s',y='Membrane_potential_mV'),color='red')
+    my_plot+= geom_line(Post_trans_Init_Value_table,aes(x='Time_s',y='Membrane_potential_mV'),color='blue')
+    my_plot+=geom_point(point_table,aes(x='Time_s',y='Membrane_potential_mV',color="Feature"))
+    #my_plot+=ylim(-70.5,-60) 
+    #my_plot+=xlim(1.99,2.01)
+    print(my_plot)
+    
+    #return Bridge_Error
+    if abs(Bridge_Error) <0.001:
+        print('Last_run, Rb=',Bridge_Error)
+        return Bridge_Error
+    else:
+        print("NEW_RUN,Bridge_error=",Bridge_Error)
+        
+        time_trace=np.array(TPC_table['Time_s'])
+        start_time_index = np.argmin(abs(time_trace - stim_start_time))
+        end_time_index = np.argmin(abs(time_trace - stim_end_time))
+        corrected_potential_trace=np.array(TPC_table['Membrane_potential_mV'])
+        
+        corrected_potential_trace[start_time_index:end_time_index]=corrected_potential_trace[start_time_index:end_time_index]+Bridge_Error*(stimulus_baseline-stim_amplitude)
+        
+        new_TPC_table=create_TPC(time_trace=time_trace,
+                              potential_trace=corrected_potential_trace,
+                              current_trace=np.array(TPC_table['Input_current_pA']),
+                              filter=2.)
+        
+        new_TPC_table=new_TPC_table.reset_index(drop=True)
+        new_TPC_table.loc[0,"Potential_first_time_derivative_mV/s"]=new_TPC_table.loc[1,"Potential_first_time_derivative_mV/s"]
+        return Bridge_Error+estimate_bridge_error(new_TPC_table,stim_amplitude,stim_start_time,stim_end_time)
+    
+    
+        
+        
+    
+    #print(dV_dt_trans,max_abs_dI_dt_index,T_trans,time_max_abs_dV_dt,time_zero_crossing,DT_trans)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
+

@@ -24,7 +24,7 @@ from matplotlib.colors import LogNorm
 import warnings
 import pandas
 import os
-from lmfit.models import LinearModel, StepModel, ExpressionModel, Model,ExponentialModel,ConstantModel,GaussianModel
+from lmfit.models import LinearModel, StepModel, ExpressionModel, Model,ExponentialModel,ConstantModel,GaussianModel,QuadraticModel
 from lmfit import Parameters, Minimizer,fit_report
 from plotnine.scales import scale_y_continuous,ylim,xlim,scale_color_manual
 from plotnine.labels import xlab
@@ -36,6 +36,8 @@ from scipy.misc import derivative
 from scipy import io
 
 from allensdk.core.cell_types_cache import CellTypesCache
+import Data_treatment as data_treat
+import Electrophy_treatment as ephys_treat
 
 #%%
 ctc= CellTypesCache(manifest_file="/Users/julienballbe/My_Work/Allen_Data/Common_Script/Full_analysis_cell_types/manifest.json")
@@ -75,46 +77,6 @@ def get_stim_freq_table(SF_table, response_time):
     SF_table=SF_table.loc[:,['Sweep', 'Stim_amp_pA', 'Frequency_Hz']]
     return SF_table
 
-def data_pruning (stim_freq_table):
-    
-    stim_freq_table=stim_freq_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
-    frequency_array=np.array(stim_freq_table.loc[:,'Frequency_Hz'])
-    step_array=np.diff(frequency_array)
-    
-    if np.count_nonzero(frequency_array)<4:
-        obs='Less_than_4_response'
-        do_fit=False
-        return obs,do_fit
-    
-    if np.count_nonzero(step_array)<3 :
-        obs='Less_than_3_different_frequencies'
-        do_fit=False
-        return obs,do_fit
-        
-    first_non_zero=np.flatnonzero(frequency_array)[0]
-    stim_array=np.array(stim_freq_table.loc[:,'Stim_amp_pA'])[first_non_zero:]
-    stimulus_span=stim_array[-1]-stim_array[0]
-    
-    if stimulus_span<100.:
-        obs='Stimulus_span_lower_than_100pA'
-        do_fit=False
-        return obs,do_fit
-    
-    count,bins=np.histogram(stim_array,
-         bins=int((stim_array[-1]+(10 - stimulus_span % 10)-stim_array[0])/10),
-          range=(stim_array[0], stim_array[-1]+(10 - stimulus_span % 10)))
-          
-        
-    different_stim=len(np.flatnonzero(count))
-    
-    if different_stim <5:
-        obs='Less_than_5_different_stim_amp'
-        do_fit=False
-        return obs,do_fit
-    
-    obs='-'
-    do_fit=True
-    return obs,do_fit
 
 def normalized_root_mean_squared_error(true, pred,pred_extended):
     #Normalization by the interquartile range
@@ -145,7 +107,12 @@ def fit_IO_curve(stimulus_frequency_table,do_plot=False):
 
          
          #get initial estimate of parameters for single sigmoid fit
-         without_zero_index=np.flatnonzero(y_data)[0]
+         
+         if len(np.flatnonzero(y_data))>0:
+             without_zero_index=np.flatnonzero(y_data)[0]
+         else:
+             without_zero_index=y_data.iloc[0]
+         
          median_firing_rate_index=np.argmax(y_data>np.median(y_data.iloc[without_zero_index:]))
 
          #Get the stimulus amplitude correspondingto the median non-zero firing rate
@@ -276,17 +243,17 @@ def fit_IO_curve(stimulus_frequency_table,do_plot=False):
          Saturation=np.nan
          return obs,best_Amplitude,best_Hill_coef,best_Half_cst,QNRMSE,x_shift,Gain,Threshold,Saturation
          
-    except (ValueError):
-          obs='Error_Value'
-          best_Amplitude=np.nan
-          best_Half_cst=np.nan
-          best_Hill_coef=np.nan
-          QNRMSE=np.nan
-          x_shift=np.nan
-          Gain=np.nan
-          Threshold=np.nan
-          Saturation=np.nan
-          return obs,best_Amplitude,best_Hill_coef,best_Half_cst,QNRMSE,x_shift,Gain,Threshold,Saturation
+    # except (ValueError):
+    #       obs='Error_Value'
+    #       best_Amplitude=np.nan
+    #       best_Half_cst=np.nan
+    #       best_Hill_coef=np.nan
+    #       QNRMSE=np.nan
+    #       x_shift=np.nan
+    #       Gain=np.nan
+    #       Threshold=np.nan
+    #       Saturation=np.nan
+    #       return obs,best_Amplitude,best_Hill_coef,best_Half_cst,QNRMSE,x_shift,Gain,Threshold,Saturation
      
     except (RuntimeError):
          obs='Error_Runtime'
@@ -362,25 +329,18 @@ def extract_inst_freq_table(SF_table, response_time):
         if len(spike_time_list) >2:
             for current_spike_time_index in range(1,len(spike_time_list)):
                 current_inst_frequency=1/(spike_time_list[current_spike_time_index]-spike_time_list[current_spike_time_index-1])
-                if current_inst_frequency>1:
-                    print("current_inst_freq=",current_inst_frequency)
-                    print('index=',current_spike_time_index)
-                    print('spike_time_i=',spike_time_list[current_spike_time_index])
-                    print('spike_time_i-1=',spike_time_list[current_spike_time_index-1])
-                    print('sweep=',current_sweep)
-                    print(spike_time_list)
+                
                 SF_table.loc[current_sweep,str('Interval_'+str(current_spike_time_index))]=current_inst_frequency
                 
-            SF_table.loc[current_sweep,'Interval_1':]/=SF_table.loc[current_sweep,'Interval_1']
-    # inst_freq_table = inst_freq_table.sort_values(by=["Cell_id", 'stim_amplitude_pA'])
-    # inst_freq_table['Cell_id']=pd.Categorical(inst_freq_table['Cell_id'])
+        SF_table.loc[current_sweep,'Interval_1':]/=SF_table.loc[current_sweep,'Interval_1']
     
     interval_freq_table=pd.DataFrame(columns=['Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep'])
     isnull_table=SF_table.isnull()
-    for col in range(5,(SF_table.shape[1])):
+    for col in range(6,(SF_table.shape[1])):
         for line in range(SF_table.shape[0]):
             if isnull_table.iloc[line,col] == False:
-                new_line=pd.Series([int(col-4), # Interval#
+
+                new_line=pd.Series([int(col-5), # Interval#
                                     SF_table.iloc[line,col], # Instantaneous frequency
                                     np.float64(SF_table.iloc[line,3]), # Stimulus amplitude
                                     SF_table.iloc[line,0]],# Sweep id
@@ -448,37 +408,48 @@ def fit_adaptation_curve(interval_frequency_table,do_plot=False):
             return obs,best_A,best_B,best_C,RMSE
         x_data=interval_frequency_table.loc[:,'Interval']
         y_data=interval_frequency_table.loc[:,'Normalized_Inst_frequency']
-        print(interval_frequency_table)
+        
         
         median_table=interval_frequency_table.groupby(by=["Interval"],dropna=True).median()
+        
         median_table["Count_weights"]=pd.DataFrame(interval_frequency_table.groupby(by=["Interval"],dropna=True).count()).loc[:,"Sweep"] #count number of sweep containing a response in interval#
         median_table["Interval"]=median_table.index
         median_table["Interval"]=np.float64(median_table["Interval"])  
+        y_data.reset_index(drop=True)
+        y_delta=y_data.iloc[-1]-y_data.iloc[0]
+        initial_B=y_data.iloc[1]+(1-(1/np.exp(1)))*y_delta
+        initial_B_idx=np.argmin(abs(y_data - initial_B))
+        initial_time_cst=x_data[initial_B_idx]
+        initial_A=(y_data.iloc[0]-y_data.iloc[-1])/np.exp(-x_data.iloc[0]/initial_time_cst)
         
-
-        try: #find index of the first value lower than median Inst_freq (median or mean just between first and lowest values)
-            lower_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val<((min(median_table["Normalized_Inst_frequency"])+median_table["Normalized_Inst_frequency"][1])/2))
-        except(StopIteration):
-            lower_index=np.inf
+        # try: #find index of the first value lower than median Inst_freq (median or mean just between first and lowest values)
+        #     lower_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val<((min(median_table["Normalized_Inst_frequency"])+median_table["Normalized_Inst_frequency"][1])/2))
+        # except(StopIteration):
+        #     lower_index=np.inf
             
-        try: #find index of the first value higher than median Inst_freq (median or mean just between highest and first values)
-            higher_index= next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val>((max(median_table["Normalized_Inst_frequency"])+median_table["Normalized_Inst_frequency"][1])/2))
-        except(StopIteration):
-            higher_index=np.inf
+        # try: #find index of the first value higher than median Inst_freq (median or mean just between highest and first values)
+        #     higher_index= next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val>((max(median_table["Normalized_Inst_frequency"])+median_table["Normalized_Inst_frequency"][1])/2))
+        # except(StopIteration):
+        #     higher_index=np.inf
 
 
-        if lower_index<higher_index: # in this case we consider that the frequency is globally decreasing
-            med_index=lower_index
-            initial_amplitude=1
+        # if lower_index<higher_index: # in this case we consider that the frequency is globally decreasing
+        #     med_index=lower_index
+        #     initial_amplitude=1
             
-            initial_decay_value_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val<(min(median_table["Normalized_Inst_frequency"])+(median_table["Normalized_Inst_frequency"][1]-min(median_table["Normalized_Inst_frequency"]))*(1/np.exp(1))))
-            initial_decay_value=median_table["Interval"][initial_decay_value_index]
+        #     initial_decay_value_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val<(min(median_table["Normalized_Inst_frequency"])+(median_table["Normalized_Inst_frequency"][1]-min(median_table["Normalized_Inst_frequency"]))*(1/np.exp(1))))
+        #     initial_decay_value=median_table["Interval"][initial_decay_value_index]
             
-        else: #in this case, we consider the response is generally increasing
-            med_index=higher_index
-            initial_amplitude=-1
-            initial_decay_value_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val>(median_table["Normalized_Inst_frequency"][1])*(1-(1/np.exp(1))))
-            initial_decay_value=median_table["Interval"][initial_decay_value_index]
+        # else: #in this case, we consider the response is generally increasing
+        #     med_index=higher_index
+        #     initial_amplitude=-1
+        #     print(median_table["Normalized_Inst_frequency"])
+        #     print((median_table["Normalized_Inst_frequency"][1])*(1-(1/np.exp(1))))
+            
+        #     print(median_table["Interval"])
+        #     initial_decay_value_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val>(median_table["Normalized_Inst_frequency"][1])*(1-(1/np.exp(1))))
+        #     print(initial_decay_value_index)
+        #     initial_decay_value=median_table["Interval"][initial_decay_value_index]
             
         
         
@@ -487,8 +458,11 @@ def fit_adaptation_curve(interval_frequency_table,do_plot=False):
         
         decay_parameters=Parameters()
 
-        decay_parameters.add("A",value=median_table["Normalized_Inst_frequency"][1])
-        decay_parameters.add('B',value=initial_decay_value,min=0)
+        # decay_parameters.add("A",value=median_table["Normalized_Inst_frequency"][1])
+        # decay_parameters.add('B',value=initial_decay_value,min=0)
+        # decay_parameters.add('C',value=median_table["Normalized_Inst_frequency"][max(median_table["Interval"])])
+        decay_parameters.add("A",value=initial_A)
+        decay_parameters.add('B',value=initial_B,min=0)
         decay_parameters.add('C',value=median_table["Normalized_Inst_frequency"][max(median_table["Interval"])])
         
        
@@ -558,4 +532,121 @@ def fit_adaptation_curve(interval_frequency_table,do_plot=False):
         RMSE=np.nan
         return obs,best_A,best_B,best_C,RMSE
      
+
+def time_cst_model(x,A,tau,C):
+    y=A*np.exp(-(x)/tau)+C
+    return y
+
+def fit_membrane_trace (time_membrane_table,start_time,end_time,do_plot=False):
+    x_data=np.array(time_membrane_table.loc[:,'Time_s'])
+    y_data=np.array(time_membrane_table.loc[:,"Membrane_potential_mV"])
+    start_idx = np.argmin(abs(x_data - start_time))
+    end_idx = np.argmin(abs(x_data - end_time))
+    
+    membrane_baseline=np.mean(y_data[:start_idx])
+    mid_idx=int((end_idx+start_idx)/2)
+    membrane_SS=np.mean(y_data[mid_idx:end_idx])
+    
+    membrane_delta=membrane_SS-membrane_baseline
+    initial_potential_time_cst=membrane_baseline+(1-(1/np.exp(1)))*membrane_delta
+    initial_potential_time_cst_idx=np.argmin(abs(y_data - initial_potential_time_cst))
+    initial_time_cst=x_data[initial_potential_time_cst_idx]-start_time
+    
+    initial_A=(y_data[start_idx]-membrane_SS)/np.exp(-x_data[start_idx]/initial_time_cst)
+
+    time_cst_Model=Model(time_cst_model)
+    
+    time_cst_parameters=Parameters()
+
+    time_cst_parameters.add("A",value=initial_A)
+    time_cst_parameters.add('tau',value=initial_time_cst)
+    time_cst_parameters.add('C',value=membrane_SS)
+    
+    result = time_cst_Model.fit(y_data[start_idx:end_idx], time_cst_parameters, x=x_data[start_idx:end_idx])
+
+    best_A=result.best_values['A']
+    best_tau=result.best_values['tau']
+    best_C=result.best_values['C']
+    
+    
+    if do_plot==True:
+        simulation=time_cst_model(x_data[start_idx:end_idx],best_A,best_tau,best_C)
+        sim_table=pd.DataFrame(np.column_stack((x_data[start_idx:end_idx],simulation)),columns=["Time_s","Membrane_potential_mV"])
+        
+        my_plot=ggplot(time_membrane_table,aes(x=time_membrane_table["Time_s"],y=time_membrane_table["Membrane_potential_mV"]))+geom_line(color='blue')
+        
+        
+        my_plot=my_plot+geom_line(sim_table,aes(x='Time_s',y='Membrane_potential_mV'),color='red')
+        
+
+        print(my_plot)
+        
+    return best_A,best_tau,best_C
+    
+
+def fit_second_order_poly(fit_table,do_plot=False):
+    x_data=np.array(fit_table.loc[:,'Time_s'])
+    y_data=np.array(fit_table.loc[:,"Membrane_potential_mV"])
+    poly_model=QuadraticModel()
+    pars = poly_model.guess(y_data, x=x_data)
+    out = poly_model.fit(y_data, pars, x=x_data)
+    
+    a=out.best_values["a"]
+    b=out.best_values["b"]
+    c=out.best_values["c"]
+    
+    pred=a*((x_data)**2)+b*x_data+c
+    squared_error = np.square((y_data - pred))
+    sum_squared_error = np.sum(squared_error)
+    RMSE_poly = np.sqrt(sum_squared_error / y_data.size)
+    
+    
+    
+    fit_table['Data']='Original_Data'
+    simulation_table=pd.DataFrame(np.column_stack((x_data,pred)),columns=["Time_s","Membrane_potential_mV"])
+    simulation_table['Data']='Fit_Poly_Data'
+   # fit_table=pd.concat([fit_table, simulation_table], axis=0)
+    if do_plot:
+        
+        my_plot=ggplot(fit_table,aes(x="Time_s",y="Membrane_potential_mV",color='Data'))+geom_line()+ylim(-72,-70)
+        my_plot+=geom_line(simulation_table,aes(x="Time_s",y="Membrane_potential_mV",color='Data'))
+        print(my_plot)
+    return a,b,c,RMSE_poly
+    
+
+def fit_exponential(fit_table,do_plot=False):
+    x_data=np.array(fit_table.loc[:,'Time_s'])
+    y_data=np.array(fit_table.loc[:,"Membrane_potential_mV"])
+    expo_model=ExponentialModel()
+    pars = expo_model.guess(y_data, x=x_data)
+    out = expo_model.fit(y_data, pars, x=x_data)
+    
+    A=out.best_values["amplitude"]
+    tau=out.best_values["decay"]
+
+    
+    pred=A*np.exp(-(x_data)/tau)
+    squared_error = np.square((y_data - pred))
+    sum_squared_error = np.sum(squared_error)
+    RMSE_expo = np.sqrt(sum_squared_error / y_data.size)
+    
+    
+    fit_table['Data']='Original_Data'
+    simulation_table=pd.DataFrame(np.column_stack((x_data,pred)),columns=["Time_s","Membrane_potential_mV"])
+    simulation_table['Data']='Fit_Expo_Data'
+    fit_table=pd.concat([fit_table, simulation_table], axis=0)
+    if do_plot:
+        
+        my_plot=ggplot(fit_table,aes(x="Time_s",y="Membrane_potential_mV",color='Data'))+geom_line()
+        print(my_plot)
+    return A,tau,RMSE_expo
+
+    
+    
+    
+    
+    
+    
+    
+    
 
