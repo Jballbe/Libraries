@@ -66,10 +66,11 @@ def fit_specimen_fi_slope(stim_amps, avg_rates):
 
     return m, c
 
-def get_stim_freq_table(SF_table, response_time):
+def get_stim_freq_table(original_SF_table, response_time):
+    SF_table=original_SF_table.copy()
     sweep_list=np.array(SF_table.loc[:,"Sweep"])
     SF_table['Frequency_Hz']=0
-    for current_sweep in np.array(SF_table.loc[:,"Sweep"]):
+    for current_sweep in sweep_list:
         df=pd.DataFrame(SF_table.loc[current_sweep,'SF'])
         df=df[df['Feature']=='Upstroke']
         SF_table.loc[current_sweep,'Frequency_Hz']=(df[df['Time_s']<(SF_table.loc[current_sweep,'Stim_start_s']+response_time)].shape[0])/response_time
@@ -93,9 +94,10 @@ def hill_function(x, Amplitude,Hill_coef,Half_cst):
     return Amplitude*((x**(Hill_coef))/((Half_cst**Hill_coef)+(x**(Hill_coef))))
 
 
-def fit_IO_curve(stimulus_frequency_table,do_plot=False):
+def fit_IO_curve(original_stimulus_frequency_table,do_plot=False):
     
     try:
+         stimulus_frequency_table=original_stimulus_frequency_table.copy()
          stimulus_frequency_table=stimulus_frequency_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
          x_shift=abs(min(stimulus_frequency_table['Stim_amp_pA']))
          stimulus_frequency_table.loc[:,'Stim_amp_pA']=stimulus_frequency_table.loc[:,'Stim_amp_pA']+x_shift
@@ -267,20 +269,20 @@ def fit_IO_curve(stimulus_frequency_table,do_plot=False):
          Saturation=np.nan
          return obs,best_Amplitude,best_Hill_coef,best_Half_cst,QNRMSE,x_shift,Gain,Threshold,Saturation
      
-    except (TypeError):
-         obs='Error_Type'
-         best_Amplitude=np.nan
-         best_Half_cst=np.nan
-         best_Hill_coef=np.nan
-         QNRMSE=np.nan
-         x_shift=np.nan
-         Gain=np.nan
-         Threshold=np.nan
-         Saturation=np.nan
-         return obs,best_Amplitude,best_Hill_coef,best_Half_cst,QNRMSE,x_shift,Gain,Threshold,Saturation
+    # except (TypeError):
+    #      obs='Error_Type'
+    #      best_Amplitude=np.nan
+    #      best_Half_cst=np.nan
+    #      best_Hill_coef=np.nan
+    #      QNRMSE=np.nan
+    #      x_shift=np.nan
+    #      Gain=np.nan
+    #      Threshold=np.nan
+    #      Saturation=np.nan
+    #      return obs,best_Amplitude,best_Hill_coef,best_Half_cst,QNRMSE,x_shift,Gain,Threshold,Saturation
      
         
-def extract_inst_freq_table(SF_table, response_time):
+def extract_inst_freq_table(original_SF_table, response_time):
     '''
     Compute the instananous frequency in each interspike interval per sweep for a cell
 
@@ -299,9 +301,9 @@ def extract_inst_freq_table(SF_table, response_time):
     '''
     
     maximum_nb_interval =0
+    SF_table=original_SF_table.copy()
     sweep_list=np.array(SF_table.loc[:,"Sweep"])
     for current_sweep in sweep_list:
-        stim_start_time=SF_table.loc[current_sweep,'Stim_start_s']
         
         df=pd.DataFrame(SF_table.loc[current_sweep,'SF'])
         df=df[df['Feature']=='Upstroke']
@@ -309,17 +311,19 @@ def extract_inst_freq_table(SF_table, response_time):
         
         if nb_spikes>maximum_nb_interval:
             maximum_nb_interval=nb_spikes
-        
+            print("max_nb_of_interval=",maximum_nb_interval)
+            
+            
     new_columns=["Interval_"+str(i) for i in range(1,(maximum_nb_interval))]
 
     for new_col in new_columns:
         SF_table[new_col]=np.nan
 
 
-        
+
     for current_sweep in sweep_list:
 
-        stim_amplitude=SF_table.loc[current_sweep,'Stim_amp_pA']
+
         df=pd.DataFrame(SF_table.loc[current_sweep,'SF'])
         df=df[df['Feature']=='Upstroke']
         df=(df[df['Time_s']<(SF_table.loc[current_sweep,'Stim_start_s']+response_time)])
@@ -334,17 +338,18 @@ def extract_inst_freq_table(SF_table, response_time):
                 
         SF_table.loc[current_sweep,'Interval_1':]/=SF_table.loc[current_sweep,'Interval_1']
     
-    interval_freq_table=pd.DataFrame(columns=['Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep'])
+    interval_freq_table=pd.DataFrame(columns=['Spike_Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep'])
     isnull_table=SF_table.isnull()
-    for col in range(6,(SF_table.shape[1])):
+
+    for col in range(5,(SF_table.shape[1])):
         for line in range(SF_table.shape[0]):
             if isnull_table.iloc[line,col] == False:
 
-                new_line=pd.Series([int(col-5), # Interval#
+                new_line=pd.Series([int(col-4), # Interval#
                                     SF_table.iloc[line,col], # Instantaneous frequency
                                     np.float64(SF_table.iloc[line,3]), # Stimulus amplitude
                                     SF_table.iloc[line,0]],# Sweep id
-                                   index=['Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep'])
+                                   index=['Spike_Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep'])
                 interval_freq_table=interval_freq_table.append(new_line,ignore_index=True)
    
     return interval_freq_table
@@ -374,7 +379,7 @@ def exponential_decay_function(x,A,B,C):
     return y
 
 
-def fit_adaptation_curve(interval_frequency_table,do_plot=False):
+def fit_adaptation_curve(original_interval_frequency_table,do_plot=False):
     '''
     Parameters
     ----------
@@ -397,111 +402,140 @@ def fit_adaptation_curve(interval_frequency_table,do_plot=False):
     '''
     
     try:
-        
+        interval_frequency_table=original_interval_frequency_table.copy()
         if interval_frequency_table.shape[0]==0:
-            obs='Not_enough_spike'
+            obs='Not_enough_interval'
 
             best_A=np.nan
             best_B=np.nan
             best_C=np.nan
             RMSE=np.nan
-            return obs,best_A,best_B,best_C,RMSE
-        x_data=interval_frequency_table.loc[:,'Interval']
+            Adaptation_fit_table=np.nan
+            return obs,best_A,best_B,best_C,RMSE,Adaptation_fit_table
+        
+        sweep_list=interval_frequency_table['Sweep'].unique()
+        Adaptation_fit_table=pd.DataFrame(columns=["Sweep","Stim_amp_pA","A",'B','C','Nb_of_spikes'])
+        fit_table=pd.DataFrame(columns=['Spike_Interval','Normalized_Inst_frequency','Sweep','Nb_of_spikes','Stim_amp_pA'])
+        
+        interval_range=np.arange(1,max(interval_frequency_table["Spike_Interval"])+1,.1)
+        
+        for current_sweep in sweep_list:
+            sub_interval_frequency_table=interval_frequency_table[interval_frequency_table['Sweep']==current_sweep]
+            stim_amplitude=sub_interval_frequency_table.iloc[0,2]
+            
+            sub_x_data=sub_interval_frequency_table.loc[:,'Spike_Interval']
+            sub_y_data=sub_interval_frequency_table.loc[:,'Normalized_Inst_frequency']
+            
+            if sub_x_data.shape[0]<4:
+                new_line=pd.Series([current_sweep,stim_amplitude,np.nan,np.nan,np.nan,sub_x_data.shape[0]],
+                                   index=["Sweep","Stim_amp_pA","A",'B','C','Nb_of_spikes'])
+                Adaptation_fit_table=Adaptation_fit_table.append(new_line,ignore_index=True)
+                
+                continue
+                
+                
+            
+            sub_median_table=sub_interval_frequency_table.groupby(by=["Spike_Interval"],dropna=True).median()
+            sub_median_table["Count_weights"]=pd.DataFrame(sub_interval_frequency_table.groupby(by=["Spike_Interval"],dropna=True).count()).loc[:,"Sweep"] #count number of sweep containing a response in interval#
+            sub_median_table["Spike_Interval"]=sub_median_table.index
+            sub_median_table["Spike_Interval"]=np.float64(sub_median_table["Spike_Interval"])  
+
+            sub_y_data=sub_y_data.reset_index(drop=True)
+            sub_x_data=sub_x_data.reset_index(drop=True)
+
+            y_delta=sub_y_data.iloc[-1]-sub_y_data.iloc[0]
+            initial_B=sub_y_data.iloc[1]+(1-(1/np.exp(1)))*y_delta
+            initial_B_idx=np.argmin(abs(sub_y_data - initial_B))
+            
+            initial_time_cst=sub_x_data[initial_B_idx]
+            initial_A=(sub_y_data.iloc[0]-sub_y_data.iloc[-1])/np.exp(-sub_x_data.iloc[0]/initial_time_cst)
+            
+
+            decayModel=Model(exponential_decay_function)
+            
+            decay_parameters=Parameters()
+    
+            decay_parameters.add("A",value=initial_A)
+            decay_parameters.add('B',value=initial_B,min=1e-6)
+            decay_parameters.add('C',value=sub_median_table["Normalized_Inst_frequency"][max(sub_median_table["Spike_Interval"])])
+            
+            result = decayModel.fit(sub_y_data, decay_parameters, x=sub_x_data)
+    
+            current_A=result.best_values['A']
+            current_B=result.best_values['B']
+            current_C=result.best_values['C']
+            
+            pred=exponential_decay_function(sub_x_data,current_A,current_B,current_C)
+            squared_error = np.square((sub_y_data - pred))
+            sum_squared_error = np.sum(squared_error)
+            current_RMSE = np.sqrt(sum_squared_error / sub_y_data.size)
+            
+            new_line=pd.Series([current_sweep,stim_amplitude,current_A,current_B,current_C,sub_interval_frequency_table.shape[0],current_RMSE],
+                               index=["Sweep","Stim_amp_pA","A",'B','C','Nb_of_spikes','RMSE'])
+            Adaptation_fit_table=Adaptation_fit_table.append(new_line,ignore_index=True)
+
+            current_simulation=exponential_decay_function(interval_range,current_A, current_B, current_C)
+
+            current_simulation_table=pd.DataFrame(np.column_stack((interval_range,current_simulation)),columns=["Spike_Interval","Normalized_Inst_frequency"])
+            current_simulation_table['Sweep']=current_sweep
+            current_simulation_table['Nb_of_spikes']=int(sub_interval_frequency_table.shape[0])
+            current_simulation_table["Stim_amp_pA"]=stim_amplitude
+            fit_table=fit_table.append(current_simulation_table,ignore_index=True)
+            if do_plot:
+                current_plot=ggplot()+geom_point(sub_interval_frequency_table,aes(x="Spike_Interval",y="Normalized_Inst_frequency"))+geom_line(current_simulation_table,aes(x="Spike_Interval",y="Normalized_Inst_frequency"))+xlab(str('Spike_interval_Sweep_'+str(current_sweep)))
+                print(current_plot)
+
+            
+        
+        x_data=interval_frequency_table.loc[:,'Spike_Interval']
         y_data=interval_frequency_table.loc[:,'Normalized_Inst_frequency']
+        Adaptation_fit_table=Adaptation_fit_table[Adaptation_fit_table['Nb_of_spikes']>=4]
         
+        if Adaptation_fit_table.shape[0]==0:
+            obs='Not_enough_interval'
+            best_A=np.nan
+            best_B=np.nan
+            best_C=np.nan
+            RMSE=np.nan
+            Adaptation_fit_table=np.nan
+            return obs,best_A,best_B,best_C,RMSE,Adaptation_fit_table
         
-        median_table=interval_frequency_table.groupby(by=["Interval"],dropna=True).median()
-        
-        median_table["Count_weights"]=pd.DataFrame(interval_frequency_table.groupby(by=["Interval"],dropna=True).count()).loc[:,"Sweep"] #count number of sweep containing a response in interval#
-        median_table["Interval"]=median_table.index
-        median_table["Interval"]=np.float64(median_table["Interval"])  
-        y_data.reset_index(drop=True)
-        y_delta=y_data.iloc[-1]-y_data.iloc[0]
-        initial_B=y_data.iloc[1]+(1-(1/np.exp(1)))*y_delta
-        initial_B_idx=np.argmin(abs(y_data - initial_B))
-        initial_time_cst=x_data[initial_B_idx]
-        initial_A=(y_data.iloc[0]-y_data.iloc[-1])/np.exp(-x_data.iloc[0]/initial_time_cst)
-        
-        # try: #find index of the first value lower than median Inst_freq (median or mean just between first and lowest values)
-        #     lower_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val<((min(median_table["Normalized_Inst_frequency"])+median_table["Normalized_Inst_frequency"][1])/2))
-        # except(StopIteration):
-        #     lower_index=np.inf
-            
-        # try: #find index of the first value higher than median Inst_freq (median or mean just between highest and first values)
-        #     higher_index= next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val>((max(median_table["Normalized_Inst_frequency"])+median_table["Normalized_Inst_frequency"][1])/2))
-        # except(StopIteration):
-        #     higher_index=np.inf
-
-
-        # if lower_index<higher_index: # in this case we consider that the frequency is globally decreasing
-        #     med_index=lower_index
-        #     initial_amplitude=1
-            
-        #     initial_decay_value_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val<(min(median_table["Normalized_Inst_frequency"])+(median_table["Normalized_Inst_frequency"][1]-min(median_table["Normalized_Inst_frequency"]))*(1/np.exp(1))))
-        #     initial_decay_value=median_table["Interval"][initial_decay_value_index]
-            
-        # else: #in this case, we consider the response is generally increasing
-        #     med_index=higher_index
-        #     initial_amplitude=-1
-        #     print(median_table["Normalized_Inst_frequency"])
-        #     print((median_table["Normalized_Inst_frequency"][1])*(1-(1/np.exp(1))))
-            
-        #     print(median_table["Interval"])
-        #     initial_decay_value_index=next(x for x, val in enumerate(median_table["Normalized_Inst_frequency"]) if val>(median_table["Normalized_Inst_frequency"][1])*(1-(1/np.exp(1))))
-        #     print(initial_decay_value_index)
-        #     initial_decay_value=median_table["Interval"][initial_decay_value_index]
-            
-        
-        
-        
-        decayModel=Model(exponential_decay_function)
-        
-        decay_parameters=Parameters()
-
-        # decay_parameters.add("A",value=median_table["Normalized_Inst_frequency"][1])
-        # decay_parameters.add('B',value=initial_decay_value,min=0)
-        # decay_parameters.add('C',value=median_table["Normalized_Inst_frequency"][max(median_table["Interval"])])
-        decay_parameters.add("A",value=initial_A)
-        decay_parameters.add('B',value=initial_B,min=0)
-        decay_parameters.add('C',value=median_table["Normalized_Inst_frequency"][max(median_table["Interval"])])
-        
-       
-        result = decayModel.fit(y_data, decay_parameters, x=x_data)
-
-        best_A=result.best_values['A']
-        best_B=result.best_values['B']
-        best_C=result.best_values['C']
+        elif Adaptation_fit_table[Adaptation_fit_table['A']<0].shape[0]/Adaptation_fit_table.shape[0]>.2:
+            obs='Too_many_accelerating_sweeps'
+            best_A=np.nan
+            best_B=np.nan
+            best_C=np.nan
+            RMSE=np.nan
+            Adaptation_fit_table=np.nan
+            return obs,best_A,best_B,best_C,RMSE,Adaptation_fit_table
+        best_A=np.average(Adaptation_fit_table['A'],weights=Adaptation_fit_table['Nb_of_spikes'])
+        best_B=np.average(Adaptation_fit_table['B'],weights=Adaptation_fit_table['Nb_of_spikes'])
+        best_C=np.average(Adaptation_fit_table['C'],weights=Adaptation_fit_table['Nb_of_spikes'])
         
         pred=exponential_decay_function(x_data,best_A,best_B,best_C)
         squared_error = np.square((y_data - pred))
         sum_squared_error = np.sum(squared_error)
         RMSE = np.sqrt(sum_squared_error / y_data.size)
         
-        A_norm=best_A/(best_A+best_C)
-        C_norm=best_C/(best_A+best_C)
-        interval_range=np.arange(1,max(median_table["Interval"])+1,.1)
-
         simulation=exponential_decay_function(interval_range,best_A,best_B,best_C)
-        norm_simulation=exponential_decay_function(interval_range,A_norm,best_B,C_norm)
-        sim_table=pd.DataFrame(np.column_stack((interval_range,simulation)),columns=["Interval","Normalized_Inst_frequency"])
-        norm_sim_table=pd.DataFrame(np.column_stack((interval_range,norm_simulation)),columns=["Interval","Normalized_Inst_frequency"])
+
+        sim_table=pd.DataFrame(np.column_stack((interval_range,simulation)),columns=["Spike_Interval","Normalized_Inst_frequency"])
+        #norm_sim_table=pd.DataFrame(np.column_stack((interval_range,norm_simulation)),columns=["Interval","Normalized_Inst_frequency"])
+
         
-        
-        
-        my_plot=np.nan
         if do_plot==True:
             
-            my_plot=ggplot(interval_frequency_table,aes(x=interval_frequency_table["Interval"],y=interval_frequency_table["Normalized_Inst_frequency"]))+geom_point(aes(color=interval_frequency_table["Stimulus_amp_pA"]))
-            
-            my_plot=my_plot+geom_point(median_table,aes(x='Interval',y='Normalized_Inst_frequency',size=median_table["Count_weights"]),shape='s',color='red')
-            my_plot=my_plot+geom_line(sim_table,aes(x='Interval',y='Normalized_Inst_frequency'),color='black')
-            my_plot=my_plot+geom_line(norm_sim_table,aes(x='Interval',y='Normalized_Inst_frequency'),color="green")
+            my_plot=ggplot(interval_frequency_table,aes(x=interval_frequency_table["Spike_Interval"],y=interval_frequency_table["Normalized_Inst_frequency"]))+geom_point(aes(color=interval_frequency_table["Stimulus_amp_pA"]))
+            my_plot=my_plot+geom_line(fit_table,aes(x=fit_table['Spike_Interval'],y=fit_table['Normalized_Inst_frequency'],group=fit_table['Sweep'],color='Stim_amp_pA',alpha="Nb_of_spikes"))
+            #my_plot=my_plot+geom_point(median_table,aes(x='Interval',y='Normalized_Inst_frequency',size=median_table["Count_weights"]),shape='s',color='red')
+            my_plot=my_plot+geom_line(sim_table,aes(x='Spike_Interval',y='Normalized_Inst_frequency'),color='red')
+            #my_plot=my_plot+geom_line(norm_sim_table,aes(x='Interval',y='Normalized_Inst_frequency'),color="green")
 
             print(my_plot)
 
 
         obs='--'
-        return obs,best_A,best_B,best_C,RMSE
+        return obs,best_A,best_B,best_C,RMSE,Adaptation_fit_table
     
     except (StopIteration):
         obs='Error_Iteration'
@@ -509,35 +543,32 @@ def fit_adaptation_curve(interval_frequency_table,do_plot=False):
         best_B=np.nan
         best_C=np.nan
         RMSE=np.nan
-        return obs,best_A,best_B,best_C,RMSE
-    except (ValueError):
-        obs='Error_Value'
-        best_A=np.nan
-        best_B=np.nan
-        best_C=np.nan
-        RMSE=np.nan
-        return obs,best_A,best_B,best_C,RMSE
+        Adaptation_fit_table=np.nan
+        return obs,best_A,best_B,best_C,RMSE,Adaptation_fit_table
+    # except (ValueError):
+    #     obs='Error_Value'
+    #     best_A=np.nan
+    #     best_B=np.nan
+    #     best_C=np.nan
+    #     RMSE=np.nan
+    #     return obs,best_A,best_B,best_C,RMSE
     except(RuntimeError):
         obs='Error_RunTime'
         best_A=np.nan
         best_B=np.nan
         best_C=np.nan
         RMSE=np.nan
-        return obs,best_A,best_B,best_C,RMSE
-    except(TypeError):
-        obs='Error_Type'
-        best_A=np.nan
-        best_B=np.nan
-        best_C=np.nan
-        RMSE=np.nan
-        return obs,best_A,best_B,best_C,RMSE
+        Adaptation_fit_table=np.nan
+        return obs,best_A,best_B,best_C,RMSE,Adaptation_fit_table
+   
      
 
 def time_cst_model(x,A,tau,C):
     y=A*np.exp(-(x)/tau)+C
     return y
 
-def fit_membrane_trace (time_membrane_table,start_time,end_time,do_plot=False):
+def fit_membrane_trace (original_time_membrane_table,start_time,end_time,do_plot=False):
+    time_membrane_table=original_time_membrane_table.copy()
     x_data=np.array(time_membrane_table.loc[:,'Time_s'])
     y_data=np.array(time_membrane_table.loc[:,"Membrane_potential_mV"])
     start_idx = np.argmin(abs(x_data - start_time))
@@ -549,13 +580,15 @@ def fit_membrane_trace (time_membrane_table,start_time,end_time,do_plot=False):
     
     membrane_delta=membrane_SS-membrane_baseline
     initial_potential_time_cst=membrane_baseline+(1-(1/np.exp(1)))*membrane_delta
-    initial_potential_time_cst_idx=np.argmin(abs(y_data - initial_potential_time_cst))
+    
+    initial_potential_time_cst_idx=np.argmin(abs(y_data[start_idx:end_idx] - initial_potential_time_cst))+start_idx
     initial_time_cst=x_data[initial_potential_time_cst_idx]-start_time
     
-    initial_A=(y_data[start_idx]-membrane_SS)/np.exp(-x_data[start_idx]/initial_time_cst)
-
-    time_cst_Model=Model(time_cst_model)
     
+    initial_A=(y_data[start_idx]-membrane_SS)/np.exp(-x_data[start_idx]/initial_time_cst)
+    
+    time_cst_Model=Model(time_cst_model)
+
     time_cst_parameters=Parameters()
 
     time_cst_parameters.add("A",value=initial_A)
@@ -584,9 +617,11 @@ def fit_membrane_trace (time_membrane_table,start_time,end_time,do_plot=False):
     return best_A,best_tau,best_C
     
 
-def fit_second_order_poly(fit_table,do_plot=False):
+def fit_second_order_poly(original_fit_table,do_plot=False):
+    fit_table=original_fit_table.copy()
     x_data=np.array(fit_table.loc[:,'Time_s'])
     y_data=np.array(fit_table.loc[:,"Membrane_potential_mV"])
+    
     poly_model=QuadraticModel()
     pars = poly_model.guess(y_data, x=x_data)
     out = poly_model.fit(y_data, pars, x=x_data)
@@ -614,7 +649,8 @@ def fit_second_order_poly(fit_table,do_plot=False):
     return a,b,c,RMSE_poly
     
 
-def fit_exponential(fit_table,do_plot=False):
+def fit_exponential(original_fit_table,do_plot=False):
+    fit_table=original_fit_table.copy()
     x_data=np.array(fit_table.loc[:,'Time_s'])
     y_data=np.array(fit_table.loc[:,"Membrane_potential_mV"])
     expo_model=ExponentialModel()
