@@ -50,6 +50,7 @@ import h5py
 import glob
 from datetime import date
 import concurrent.futures
+from multiprocessing import Pool
 
 #%%
 ctc= CellTypesCache(manifest_file="/Users/julienballbe/My_Work/Allen_Data/Common_Script/Full_analysis_cell_types/manifest.json")
@@ -60,8 +61,27 @@ def data_pruning (stim_freq_table):
     
     stim_freq_table=stim_freq_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
     frequency_array=np.array(stim_freq_table.loc[:,'Frequency_Hz'])
-    step_array=np.diff(frequency_array)
+    
+   
     non_zero_freq=frequency_array[np.where(frequency_array>0)]
+    stim_array=np.array(stim_freq_table.loc[:,'Stim_amp_pA'])
+    stim_array_diff=np.diff(stim_array)
+    freq_array_diff=np.diff(frequency_array)
+    normalized_step_array=freq_array_diff/stim_array_diff
+    
+    last_zero_index=np.flatnonzero(frequency_array)[0]
+    if last_zero_index!=0:
+        
+        last_zero_index=np.flatnonzero(frequency_array)[0]-1
+    sub_stim_array=stim_array[last_zero_index:]
+    sub_freq_array=frequency_array[last_zero_index:]
+    sub_stim_diff=np.diff(sub_stim_array)
+    sub_freq_diff=np.diff(sub_freq_array)
+    sub_step_array=sub_freq_diff/sub_stim_diff
+    
+    #return max(sub_freq_diff),np.mean(sub_freq_diff),np.std(sub_freq_diff),max(sub_step_array),np.mean(sub_step_array),np.std(sub_step_array)
+    #print('Mean_step=',sub_step_array.mean(),'SD_step=',sub_step_array.std(),'SD/Mean=',sub_step_array.std()/sub_step_array.mean())
+    
     
     if np.count_nonzero(frequency_array)<4:
         obs='Less_than_4_response'
@@ -72,10 +92,16 @@ def data_pruning (stim_freq_table):
         obs='Less_than_3_different_frequencies'
         do_fit=False
         return obs,do_fit
-        
-    first_non_zero=np.flatnonzero(frequency_array)[0]
-    stim_array=np.array(stim_freq_table.loc[:,'Stim_amp_pA'])[(first_non_zero-1):]
-    stimulus_span=stim_array[-1]-stim_array[0]
+    
+    
+    if np.nanmax(normalized_step_array) >5.:
+        obs=str('Max_Step_'+str(np.round(np.nanmax(normalized_step_array),1))+'_too_high')
+        do_fit=False
+        return obs,do_fit
+    
+    
+    
+    # stimulus_span=stim_array_without_zero[-1]-stim_array_without_zero[0]
     
     # if stimulus_span<100.:
     #     obs='Stimulus_span_lower_than_100pA'
@@ -939,19 +965,12 @@ def create_cell_sweep_info_table_concurrent_runs(cell_id,database,cell_full_TPC_
             
             
 def create_SF_table(TPC_table,SF_dict):
-    threshold_table=TPC_table.iloc[SF_dict['Threshold'],:].copy(); threshold_table['Feature']='Threshold'
-    peak_table=TPC_table.iloc[SF_dict['Peak'],:].copy(); peak_table['Feature']='Peak'
-    upstroke_table=TPC_table.iloc[SF_dict['Upstroke'],:].copy(); upstroke_table['Feature']='Upstroke'    
-    downstroke_table=TPC_table.iloc[SF_dict['Downstroke'],:].copy(); downstroke_table['Feature']='Downstroke'
-    trough_table=TPC_table.iloc[SF_dict['Trough'],:].copy(); trough_table['Feature']='Trough'
-    fast_trough_table=TPC_table.iloc[SF_dict['Fast_Trough'],:].copy(); fast_trough_table['Feature']='Fast_Trough'
-    slow_trough_table=TPC_table.iloc[SF_dict['Slow_Trough'],:].copy(); slow_trough_table['Feature']='Slow_Trough'    
-    adp_table=TPC_table.iloc[SF_dict['ADP'],:].copy(); adp_table['Feature']='ADP'
-    f_AHP_table=TPC_table.iloc[SF_dict['fAHP'],:].copy(); f_AHP_table['Feature']='fAHP'
+    feature_table=pd.DataFrame(columns=['Time_s','Membrane_potential_mV','Input_current_pA','Potential_first_time_derivative_mV/s','Potential_second_time_derivative_mV/s/s','Feature'])
+    for feature in SF_dict.keys():
+        current_feature_table=TPC_table.iloc[SF_dict[feature],:].copy()
+        current_feature_table['Feature']=feature
+        feature_table=pd.concat([feature_table,current_feature_table])
     
-    
-    feature_table=pd.concat([threshold_table,peak_table,upstroke_table,downstroke_table,trough_table,fast_trough_table,slow_trough_table,adp_table,f_AHP_table])
-
     return  feature_table
 
 def create_full_SF_table(original_full_TPC_table,original_full_SF_dict):
@@ -963,6 +982,7 @@ def create_full_SF_table(original_full_TPC_table,original_full_SF_dict):
     full_SF_table=pd.DataFrame(columns=["Sweep","SF"])
     
     for current_sweep in sweep_list:
+        current_sweep=int(current_sweep)
         current_SF_table=create_SF_table(full_TPC_table.loc[current_sweep,'TPC'].copy(),full_SF_dict.loc[current_sweep,'SF_dict'].copy())
         new_line=pd.Series([current_sweep,current_SF_table],index=["Sweep","SF"])
         
@@ -1183,8 +1203,6 @@ def process_cell_data(cell_id,database,population_class_file):
     full_SF_dict=create_cell_full_SF_dict_table(full_TPC_table.copy(), cell_sweep_info_table.copy())
 
     full_SF_table=create_full_SF_table(full_TPC_table.copy(),full_SF_dict.copy())
-
-    #TPC,SF_table=create_full_TPC_SF_table(cell_id,database)
     
     
     
@@ -1202,9 +1220,9 @@ def process_cell_data(cell_id,database,population_class_file):
     
 
     for response_time in time_response_list:
-        print('Respinse_time',response_time)
+
         stim_freq_table=fitlib.get_stim_freq_table(full_SF_table.copy(),cell_sweep_info_table.copy(),response_time)
-        #return stim_freq_table
+
         pruning_obs,do_fit=data_pruning(stim_freq_table)
         if do_fit ==True:
             I_O_obs,Hill_Amplitude,Hill_coef,Hill_Half_cst,I_O_QNRMSE,x_shift,Gain,Threshold,Saturation=fitlib.fit_IO_curve(stim_freq_table,do_plot=False)
@@ -1348,6 +1366,16 @@ def write_cell_file_h5(cell_file_path,original_full_TPC_table,original_full_SF_d
     
     f.close()
     
+def create_cell_json_file(metadata_table,full_TPC_table,full_SF_table,full_SF_dict,cell_sweep_info_table,cell_fit_table,cell_feature_table,Full_Adaptation_fit_table):
+    my_dict={'Metadata':[metadata_table],
+                  'TPC':[TPC],
+                  'Spike_feature_table':[SF_table],
+                  'Fit_table':[cell_fit_table],
+                  'IO_table':[cell_feature_table]}
+
+    my_dict=pd.DataFrame(my_dict)
+    my_dict.to_json(str('/Users/julienballbe/Downloads/Data_test_'+str(cell_id)+'.json'))
+
 def create_cell_file(cell_id_list,saving_folder_path = "/Volumes/Work_Julien/Cell_Data_File/",overwrite=False):
     
     today=date.today()
@@ -1405,6 +1433,138 @@ def create_cell_file(cell_id_list,saving_folder_path = "/Volumes/Work_Julien/Cel
         Cell_file_information.to_csv("/Volumes/Work_Julien/Cell_Data_File/Cell_file_information.csv")
     
     return 'Done'
+    
+def get_TPC_SF_table_concurrent_runs(file,sweep):
+
+    current_file=h5py.File(file, 'r')
+    TPC_group=current_file['TPC_tables']
+    current_TPC_table=TPC_group[str(sweep)]
+    TPC_colnames=np.array([x.decode('ascii') for x in list(TPC_group['TPC_colnames'])],dtype='str')
+    current_TPC_table=pd.DataFrame(current_TPC_table)
+    current_TPC_table.columns=TPC_colnames
+
+    new_line_TPC=pd.Series([sweep,current_TPC_table],index=['Sweep','TPC'])
+    
+    SF_group=current_file['SF_tables']
+    current_SF_table=SF_group[str(sweep)]
+    SF_dict={}
+    
+    for feature in current_SF_table.keys():
+        SF_dict[feature]=np.array(current_SF_table[feature])
+    
+    new_line_SF=pd.Series([sweep,SF_dict],index=['Sweep','SF_dict'])
+    
+    
+    
+    return new_line_TPC,new_line_SF
+    
+
+
+
+def import_h5_file(file_path,selection=['All']):
+    
+    #current_file=h5py.File('/Volumes/Work_Julien/Cell_Data_File/Cell_170508AL258_1_data_file.h5', 'r')
+    current_file=h5py.File(file_path, 'r')
+    
+    Full_TPC_table=None
+    full_SF_dict_table=None
+    full_SF_table=None
+    Metadata_table=None
+    sweep_info_table=None
+    cell_fit_table=None
+    cell_feature_table=None
+    Adaptation_fit_table=None
+    
+    if 'All' in selection or 'TPC_SF' in selection:
+    ## TPC and SF ##
+        TPC_group=current_file['TPC_tables']
+        
+        Full_TPC_table=pd.DataFrame(columns=['Sweep','TPC'])
+        sweep_list=list(TPC_group.keys())
+        sweep_list.remove('TPC_colnames')
+        sweep_list=np.array(sweep_list)
+        
+        full_SF_dict_table=pd.DataFrame(columns=['Sweep','SF_dict'])
+        
+        with Pool() as pool:
+            params=[(file_path,x) for x in sweep_list]
+    
+            for result in pool.starmap(get_TPC_SF_table_concurrent_runs, params):
+                Full_TPC_table=Full_TPC_table.append(result[0],ignore_index=True)
+                full_SF_dict_table=full_SF_dict_table.append(result[1],ignore_index=True)
+                
+        Full_TPC_table.index=Full_TPC_table["Sweep"]
+        Full_TPC_table.index=Full_TPC_table.index.astype(int)
+        
+        
+        full_SF_dict_table.index=full_SF_dict_table["Sweep"]
+        full_SF_dict_table.index=full_SF_dict_table.index.astype(int)
+        
+        full_SF_table=create_full_SF_table(Full_TPC_table,full_SF_dict_table)
+        
+    
+    if 'All' in selection or 'Metadata' in selection:
+        ## Metadata ##
+        
+        Metadata_group=current_file['Metadata_table']
+        Metadata_dict={}
+        for data in Metadata_group.keys():
+            if type(Metadata_group[data][()]) == bytes:
+                Metadata_dict[data]=Metadata_group[data][()].decode('ascii')
+            else:
+                Metadata_dict[data]=Metadata_group[data][()]
+        Metadata_table=pd.DataFrame(Metadata_dict,index=[0])
+        
+    
+    if 'All' in selection or 'Sweep_info' in selection:
+            
+        ## Sweep_info_table ##
+        
+        Sweep_info_group = current_file['Sweep_info']
+        Sweep_info_dict={}
+        for data in Sweep_info_group.keys():
+            Sweep_info_dict[data]=Sweep_info_group[data][()]
+        
+        sweep_info_table=pd.DataFrame(Sweep_info_dict,index=Sweep_info_dict['Sweep'])
+        
+    
+    if 'All' in selection or 'Cell_fit' in selection:
+        ## Cell_fit ##
+        
+        Cell_fit_group = current_file['Cell_Fit']
+        Cell_fit_dict={}
+        for data in Cell_fit_group.keys():
+            if type(Cell_fit_group[data][(0)]) == bytes:
+                Cell_fit_dict[data]=np.array([x.decode('ascii') for x in Cell_fit_group[data][()]],dtype='str')
+            else:
+                Cell_fit_dict[data]=Cell_fit_group[data][()]
+        
+        cell_fit_table=pd.DataFrame(Cell_fit_dict,index=Cell_fit_dict['Response_time_ms'])
+        cell_fit_table.index=cell_fit_table.index.astype(int)
+    
+    if 'All' in selection or "Cell_Feature" in selection:
+        ## Cell_feature ##
+        
+        Cell_feature_group = current_file['Cell_Feature']
+        cell_feature_table=pd.DataFrame(Cell_feature_group['Cell_Feature_Table'])
+        cell_feature_table.columns=np.array([x.decode('ascii') for x in Cell_feature_group['Cell_Feature_Table_colnames'][()]],dtype='str')
+        cell_feature_table.index=cell_feature_table['Response_time_ms']
+        cell_feature_table.index=cell_feature_table.index.astype(int)
+        
+    if 'All' in selection or "Adaptation_Fit" in selection:
+        ## Adaptation_fit ##
+        
+        Adaptation_fit_group = current_file['Adaptation_Fit']
+        Adaptation_fit_table=pd.DataFrame(Adaptation_fit_group['Adaptation_Fit_Table'])
+        Adaptation_fit_table.columns=np.array([x.decode('ascii') for x in Adaptation_fit_group['Adaptation_Fit_Table_colnames'][()]],dtype='str')
+        
+    
+    current_file.close()
+    return Full_TPC_table,full_SF_dict_table,full_SF_table,Metadata_table,sweep_info_table,cell_fit_table,cell_feature_table,Adaptation_fit_table
+    
+        
+        
+    
     
     
     

@@ -98,8 +98,8 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([spike_threshold_table,peak_spike_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
-        current_plot+=xlab('3 - After filter_putatyive_spikes')
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
+        current_plot+=xlab('3 - After filter_putative_spikes')
         print(current_plot)
     
     upstroke_index=find_upstroke_indexes(v=membrane_trace_array,
@@ -113,7 +113,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([full_table,upstroke_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('4 - After find_upstroke_indexes')
         print(current_plot)
         
@@ -132,7 +132,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([full_table,refined_threshold_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('5 - After refine_threshold_indexes')
         print(current_plot)
         
@@ -161,7 +161,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([spike_threshold_table,peak_spike_table,upstroke_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('6 - After check_thresholds_and_peaks')
         print(current_plot)
         
@@ -178,7 +178,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([full_table,trough_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('7 - After find_trough_indexes')
         print(current_plot)
     
@@ -197,7 +197,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([full_table,fast_AHP_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('8 - After find_fast_AHP_indexes')
         print(current_plot)
     
@@ -214,7 +214,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
     #     full_table=pd.concat([full_table,slow_trough_table])
     #     current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
     #     current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-    #     current_plot+=xlim(stim_start_time,stim_end_time)
+    #     current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
     #     current_plot+=xlab('9 - After find_slow_trough_indexes')
     #     print(current_plot)
     
@@ -232,11 +232,11 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         full_table=pd.concat([full_table,downstroke_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('9 - After find_trough_indexes')
         print(current_plot)
         
-        
+    
     fast_trough_index, adp_index, slow_trough_index, clipped=find_fast_trough_adp_slow_trough(v=membrane_trace_array, 
                                                                                                     t=time_array, 
                                                                                                     spike_indexes=spike_threshold_index,
@@ -266,7 +266,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('10 - After find_fast_trough/ADP/slow_trough_indexes')
         print(current_plot)
         
@@ -356,7 +356,7 @@ def identify_spike_shorten(membrane_trace_array,time_array,current_trace,stim_st
         full_table=pd.concat([spike_threshold_table,peak_spike_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('3 - After filter_putatyive_spikes')
         print(current_plot)
     
@@ -371,7 +371,7 @@ def identify_spike_shorten(membrane_trace_array,time_array,current_trace,stim_st
         full_table=pd.concat([full_table,upstroke_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('4 - After find_upstroke_indexes')
         print(current_plot)
         
@@ -390,12 +390,12 @@ def identify_spike_shorten(membrane_trace_array,time_array,current_trace,stim_st
         full_table=pd.concat([full_table,refined_threshold_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('5 - After refine_threshold_indexes')
         print(current_plot)
         
     
-    
+
     spike_threshold_index,peak_index_array,upstroke_index,clipped=check_thresholds_and_peaks(v=membrane_trace_array,
                                                                                             t=time_array,
                                                                                             spike_indexes=spike_threshold_index,
@@ -419,7 +419,7 @@ def identify_spike_shorten(membrane_trace_array,time_array,current_trace,stim_st
         full_table=pd.concat([spike_threshold_table,peak_spike_table,upstroke_table])
         current_plot=ggplot(TPC_table,aes(x='Time_s',y="Membrane_potential_mV"))+geom_line()
         current_plot+=geom_point(full_table,aes(x='Time_s',y="Membrane_potential_mV",color='Feature'))
-        current_plot+=xlim(stim_start_time,stim_end_time)
+        current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('6 - After check_thresholds_and_peaks')
         print(current_plot)
         
@@ -951,7 +951,7 @@ def check_thresholds_and_peaks(v, t, spike_indexes, peak_indexes, upstroke_index
 
     return spike_indexes, peak_indexes, upstroke_indexes, clipped
 
-def find_clipped_spikes(v, t, spike_indexes, peak_indexes, end_index, tol):
+def find_clipped_spikes(v, t, spike_indexes, peak_indexes, end_index, tol, time_tol=0.005):
     """
     Check that last spike was not cut off too early by end of stimulus
     by checking that the membrane potential returned to at least the threshold
@@ -966,7 +966,7 @@ def find_clipped_spikes(v, t, spike_indexes, peak_indexes, end_index, tol):
     end_index: int index of the end of time window for feature analysis
 
     tol: float tolerance to returning to threshold
-
+    time_tol: float specify the time window in which
     Returns
     -------
     clipped: Boolean np.array
@@ -974,14 +974,16 @@ def find_clipped_spikes(v, t, spike_indexes, peak_indexes, end_index, tol):
     clipped = np.zeros_like(spike_indexes, dtype=bool)
 
     if len(spike_indexes)>0:
-        vtail = v[peak_indexes[-1]:end_index + 1]
-        if not np.any(vtail <= v[spike_indexes[-1]] + tol):
-           
-            logging.debug(
-                "Failed to return to threshold voltage + tolerance (%.2f) after last spike (min %.2f) - marking last spike as clipped",
-                v[spike_indexes[-1]] + tol, vtail.min())
-            clipped[-1] = True
-            logging.debug("max %f, min %f, t(end_index):%f" % (np.max(vtail), np.min(vtail), t[end_index]))
+        
+        if t[peak_indexes[-1]]>= t[end_index]-time_tol:
+            vtail = v[peak_indexes[-1]:end_index + 1]
+            if not np.any(vtail <= v[spike_indexes[-1]] + tol):
+               
+                logging.debug(
+                    "Failed to return to threshold voltage + tolerance (%.2f) after last spike (min %.2f) - marking last spike as clipped",
+                    v[spike_indexes[-1]] + tol, vtail.min())
+                clipped[-1] = True
+                logging.debug("max %f, min %f, t(end_index):%f" % (np.max(vtail), np.min(vtail), t[end_index]))
 
     return clipped
 
@@ -1121,7 +1123,7 @@ def find_trough_indexes(v, t, spike_indexes, peak_indexes, clipped=None, end=Non
     -------
     trough_indexes : numpy array of threshold indexes
     """
-
+    
     if not spike_indexes.size or not peak_indexes.size:
         return np.array([])
 
@@ -1140,14 +1142,16 @@ def find_trough_indexes(v, t, spike_indexes, peak_indexes, clipped=None, end=Non
         # If last spike is cut off by the end of the window, trough is undefined
         trough_indexes[-1] = np.nan
     else:
+        
         trough_indexes[-1] = v[peak_indexes[-1]:end_index].argmin() + peak_indexes[-1]
+        
 
     # nwg - trying to remove this next part for now - can't figure out if this will be needed with new "clipped" method
 
     # If peak is the same point as the trough, drop that point
-
+    
     trough_indexes = trough_indexes[np.where(peak_indexes[:len(trough_indexes)] != trough_indexes)]
-
+    
     
     return np.array(trough_indexes)
 
@@ -1257,7 +1261,7 @@ def find_fast_trough_adp_slow_trough(v, t, spike_indexes, peak_indexes, downstro
     isi_types = []
 
     update_clipped = []
-
+    
     for dwnstk, next_spk in zip(downstroke_indexes,np.append(valid_spike_indexes[1:], end_index)):
         target = downstroke_frac * dvdt[dwnstk]
         dwnstk=int(dwnstk)
@@ -1528,7 +1532,7 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
     fit_table=stimulus_start_table[stimulus_start_table["Time_s"]<=(T_seg_start+T_seg_duration)]
     fit_table=fit_table[fit_table['Time_s']>=(T_seg_start)]
     test_spike_table=stimulus_start_table[stimulus_start_table["Time_s"]<=(T_seg_start+T_seg_duration)]
-    test_spike_table=stimulus_start_table[stimulus_start_table["Time_s"]>=T_trans]
+    test_spike_table=stimulus_start_table[stimulus_start_table["Time_s"]>=T_trans-.01]
     
     
     potential_spike_table=identify_spike_shorten(np.array(test_spike_table.Membrane_potential_mV),
@@ -1537,7 +1541,17 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
                                    np.array(test_spike_table.Time_s)[0],
                                    np.array(test_spike_table.Time_s)[-1],do_plot=False)
     
+    PreTrans_Est_table_to_fit=stimulus_start_table[stimulus_start_table["Time_s"]<=(T_trans-.001)]
+    PreTrans_Est_table_to_fit=PreTrans_Est_table_to_fit[PreTrans_Est_table_to_fit['Time_s']>=(T_trans-.01)]
     
+    # #fit the potential values to a 2nd order polynomial
+    a_bis,b_bis,c_bis,RMSE_poly_bis=fitlib.fit_second_order_poly(PreTrans_Est_table_to_fit,do_plot=False)
+    
+    # # Use the PreTrans_Est_table_to_fit fit to estimate the potential value at T_Trans = Pre_Trans_Final
+    Pre_Trans_Final=a_bis*((T_trans)**2)+b_bis*T_trans+c_bis
+    
+    
+    PreTrans_Est_table_to_fit['Legend']='Pre_Trans_fit'
     
     if potential_spike_table == True:
     
@@ -1574,17 +1588,7 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
        
 
         #PreTrans_Est_table_to_fit is a table of Time_potential values between 1ms and 10ms before T_Trans,
-        PreTrans_Est_table_to_fit=stimulus_start_table[stimulus_start_table["Time_s"]<=(T_trans-.001)]
-        PreTrans_Est_table_to_fit=PreTrans_Est_table_to_fit[PreTrans_Est_table_to_fit['Time_s']>=(T_trans-.01)]
         
-        # #fit the potential values to a 2nd order polynomial
-        a_bis,b_bis,c_bis,RMSE_poly_bis=fitlib.fit_second_order_poly(PreTrans_Est_table_to_fit,do_plot=False)
-        
-        # # Use the PreTrans_Est_table_to_fit fit to estimate the potential value at T_Trans = Pre_Trans_Final
-        Pre_Trans_Final=a_bis*((T_trans)**2)+b_bis*T_trans+c_bis
-        
-        
-        PreTrans_Est_table_to_fit['Legend']='Pre_Trans_fit'
       
         
         #Get the same table as PreTrans_Est_table_to_fit, but up to T_Trans, for plotting purpose
@@ -1742,7 +1746,7 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
     fit_table_end=fit_table_end[fit_table_end['Time_s']<=(T_seg_start_end)]
     
     test_spike_table_end=stimulus_end_table[stimulus_end_table["Time_s"]>=(T_seg_start_end-T_seg_duration_end)]
-    test_spike_table_end=stimulus_end_table[stimulus_end_table["Time_s"]<=T_trans_end]
+    test_spike_table_end=stimulus_end_table[stimulus_end_table["Time_s"]<=T_trans_end+.01]
     
     potential_spike_table=identify_spike_shorten(np.array(test_spike_table_end.Membrane_potential_mV),
                                     np.array(test_spike_table_end.Time_s),

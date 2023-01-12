@@ -34,7 +34,7 @@ import seaborn as sns
 from scipy.interpolate import splrep, splev
 from scipy.misc import derivative
 from scipy import io
-
+import math
 from allensdk.core.cell_types_cache import CellTypesCache
 import Data_treatment as data_treat
 import Electrophy_treatment as ephys_treat
@@ -88,14 +88,16 @@ def normalized_root_mean_squared_error(true, pred,pred_extended):
     rmse = np.sqrt(sum_squared_error / true.size)
     Q1=np.percentile(pred_extended,25)
     Q3=np.percentile(pred_extended,75)
-    print('rmse=',rmse)
+
     nrmse_loss = rmse/(Q3-Q1)
     return nrmse_loss
 
 def hill_function(x, Amplitude,Hill_coef,Half_cst):
     return Amplitude*((x**(Hill_coef))/((Half_cst**Hill_coef)+(x**(Hill_coef))))
 
-
+def hill_function_derivative(x, Amplitude,Hill_coef,Half_cst):
+    return Amplitude*((Hill_coef*(x**(Hill_coef-1))*(Half_cst**Hill_coef))/((Half_cst**Hill_coef)+(x**(Hill_coef)))**2)
+    
 def fit_IO_curve(original_stimulus_frequency_table,do_plot=False):
     
     try:
@@ -134,29 +136,20 @@ def fit_IO_curve(original_stimulus_frequency_table,do_plot=False):
          
          sub_x_data=x_data.iloc[without_zero_index:]
          sub_y_data=y_data.iloc[without_zero_index:]
-         print('Normalisez_step=',normalized_step)
-         # if normalized_step>=1.5:
-         #     obs='Max_step_too_high'
-         #     best_Amplitude=np.nan
-         #     best_Half_cst=np.nan
-         #     best_Hill_coef=np.nan
-         #     QNRMSE=np.nan
-         #     x_shift=np.nan
-         #     Gain=np.nan
-         #     Threshold=np.nan
-         #     Saturation=np.nan
-             
          
-         # else: #If the highest step is not too high, try to fit 
+         
+         
+         # determine maximum hill_coef such that x*hill_coef <1e308
+         max_Hill_coef=math.log(1e308)/math.log(max(sub_x_data))
          Gain=np.nan
          Threshold=np.nan
          Saturation=np.nan
          hillModel=Model(hill_function)
          hill_parameters=Parameters()
-         hill_parameters.add("Half_cst",value=x0,min=0)
-         hill_parameters.add('Hill_coef',value=max_step,min=0)
+         hill_parameters.add("Half_cst",value=x0,min=1e-9)
+         hill_parameters.add('Hill_coef',value=10,min=1e-9,max=max_Hill_coef)
          hill_parameters.add('Amplitude',value=max(y_data))
-         print(hill_parameters)
+
          result = hillModel.fit(y_data, hill_parameters, x=x_data)
          best_Amplitude=result.best_values['Amplitude']
          best_Half_cst=result.best_values['Half_cst']
