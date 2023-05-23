@@ -206,7 +206,22 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('6 - After check_thresholds_and_peaks')
         print(current_plot)
-        
+    
+    if len(clipped)==1:
+        if clipped[0] == True:
+            spike_feature_dict={'Threshold':np.array([]).astype(int),
+                                'Peak':np.array([]).astype(int),
+                                'Upstroke':np.array([]).astype(int),
+                                'Downstroke':np.array([]).astype(int),
+                                'Trough':np.array([]).astype(int),
+                                'Fast_Trough':np.array([]).astype(int),
+                                'Slow_Trough':np.array([]).astype(int),
+                                'ADP':np.array([]).astype(int),
+                                'fAHP':np.array([]).astype(int)}
+            
+            return spike_feature_dict
+    
+    
     trough_index=find_trough_indexes(v=membrane_trace_array,
                                      t=time_array,
                                      spike_indexes=spike_threshold_index,
@@ -260,7 +275,7 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
     #     current_plot+=xlab('9 - After find_slow_trough_indexes')
     #     print(current_plot)
     
-
+    
     downstroke_index=find_downstroke_indexes(v=membrane_trace_array,
                                              t=time_array, 
                                              peak_indexes=peak_index_array,
@@ -277,6 +292,8 @@ def identify_spike(membrane_trace_array,time_array,current_trace,stim_start_time
         current_plot+=xlim(stim_start_time-.01,stim_end_time+.01)
         current_plot+=xlab('9 - After find_trough_indexes')
         print(current_plot)
+        
+    
         
 
     fast_trough_index, adp_index, slow_trough_index, clipped=find_fast_trough_adp_slow_trough(v=membrane_trace_array, 
@@ -1961,7 +1978,7 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
         
     return Bridge_Error #,membrane_time_cst,R_in,V_rest
 
-def get_sweep_linear_properties_new(sweep,Full_TPC_table_original,cell_sweep_info_table_original,time_window_limit=.250):
+def get_sweep_linear_properties(sweep,Full_TPC_table_original,cell_sweep_info_table_original,time_window_limit=.250):
     
     Full_TPC_table=Full_TPC_table_original.copy()
 

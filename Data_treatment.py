@@ -47,6 +47,7 @@ from lmfit.models import LinearModel, StepModel, ExpressionModel, Model, Exponen
 from lmfit import Parameters, Minimizer, fit_report
 from plotnine.scales import scale_y_continuous, ylim, xlim, scale_color_manual
 from plotnine.labels import xlab
+from plotnine.stats import stat_bin
 from sklearn.metrics import mean_squared_error
 import seaborn as sns
 import sys
@@ -99,6 +100,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
     Full_database_table = pd.read_csv(
         '/Users/julienballbe/My_Work/Data_Analysis/Full_population_files/Full_Database_Cell_id.csv')
     Full_database_table = Full_database_table.copy()
+    problem_cell=[]
 
     for cell_id in tqdm(cell_id_list):
         Cell_file_information = pd.read_csv(
@@ -164,14 +166,24 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
             elif cell_file_path in original_files and 'All' not in selection and overwrite == True:  # rewrite only part of the file
                 cell_database = Full_database_table[Full_database_table['Cell_id'] == str(
                     cell_id)]['Database'].values[0]
+                import_dict={'TPC_SF':['TPC_SF','Sweep_info'],
+                             'Sweep_info':['TPC_SF'],
+                             'Sweep_QC':['Sweep_info'],
+                             'Metadata':['Sweep_info'],
+                             'Cell_Feature_Fit':['TPC_SF','Sweep_info']
+                    }
+                needed_list=[]
 
-                needed_list = list(
-                    set(['Metadata', 'Sweep_info','Sweep_QC', "Cell_Feature_Fit"])-set(selection))
-                needed_list.append('TPC_SF')
-                print('odke')
+                for elt in selection:
+                    needed_list=list(set(needed_list)|set(import_dict[elt]))
+                #
+                # needed_list = list(
+                #     set(['Metadata', 'Sweep_info','Sweep_QC', "Cell_Feature_Fit"])-set(selection))
+                # needed_list.append('TPC_SF')
+
                 Full_TPC_table, Full_SF_dict_table, Full_SF_table, Metadata_table, sweep_info_table,cell_sweep_QC, cell_fit_table, cell_feature_table = import_h5_file(
                     cell_file_path, selection=needed_list)
-                print('okodek')
+
                 if Full_TPC_table.empty or Full_SF_dict_table.empty or Full_SF_table.empty:
                     raise Exception('TPC_table_or_SF_tables_missing')
 
@@ -225,10 +237,10 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                 print(str('File for cell '+str(cell_id)+' already existing'))
 
             else:  # create file
-                print('doeko')
+
                 cell_database = Full_database_table[Full_database_table['Cell_id'] == str(
                     cell_id)]['Database'].values[0]
-                print("pzl")
+
                 metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table,cell_sweep_QC, cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
                                                                                                                                                                                       cell_database,
                                                                                                                                                                                       population_class_table,
@@ -241,7 +253,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                                                                                                                                                                       '-',
                                                                                                                                                                                       '-',
                                                                                                                                                                                       selection=selection)
-                print('pdlzx')
+
                 write_cell_file_h5(cell_file_path,
                                    Full_TPC_table,
                                    Full_SF_dict,
@@ -273,7 +285,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                               'Lastly_modified_Cell_Fit'] = str(today)
 
         except Exception as e:
-
+            problem_cell.append(str(cell_id))
             print(str('Problem_with_cell:'+str(cell_id)+str(e)))
             Cell_file_information.loc[cell_index, 'Note'] = str(type(e))
 
@@ -289,8 +301,8 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                                               'Lastly_modified_Cell_Fit']]
         Cell_file_information.to_csv(
             "/Volumes/Work_Julien/Cell_Data_File/Cell_file_information.csv")
-
-    return 'Done'
+    print('Finished')
+    return problem_cell
 
 
 def process_cell_data(cell_id,
@@ -360,19 +372,21 @@ def process_cell_data(cell_id,
 
     if database == 'Allen_Cell_Type_Database':
         cell_id = int(cell_id)
-
-
-    if "TPC_SF" in selection:
         
+        
+    
+        
+    if "TPC_SF" in selection:
+
         Full_TPC_table = create_cell_Full_TPC_table_concurrent_runs(
             cell_id, database)
-
+        
         if 'Sweep_info' in selection or original_cell_sweep_info_table=='-':
 
-
+            
             cell_sweep_info_table = create_cell_sweep_info_table_concurrent_runs(
                 cell_id, database, Full_TPC_table.copy())
-
+        
         else:
             cell_sweep_info_table = original_cell_sweep_info_table.copy()
 
@@ -392,6 +406,7 @@ def process_cell_data(cell_id,
         Full_SF_table.index = Full_SF_table.index.astype(str)
 
     else:
+
         Full_TPC_table = original_Full_TPC_table
         Full_SF_dict = original_Full_SF_dict
         Full_SF_table = original_Full_SF_table
@@ -427,7 +442,7 @@ def process_cell_data(cell_id,
 
     if 'Cell_Feature_Fit' in selection:
         time_response_list = [.005, .010, .025, .050, .100, .250, .500]
-        
+
         cell_feature_table,cell_fit_table=compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_response_list)
 
         if cell_fit_table.shape[0] == 0:
@@ -487,24 +502,22 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
     Full_response_stim_freq_table=fitlib.get_stim_freq_table(
         Full_SF_table.copy(), cell_sweep_info_table.copy(), .5)
     
-    max_freq_step_norm = stim_freq_max_freq_step_norm(Full_response_stim_freq_table,do_plot=False)[0]
+    #max_freq_step_norm = stim_freq_max_freq_step_norm(Full_response_stim_freq_table,do_plot=False)[0]
     
-    
-    ## Test if max_freq_step/max_freq >.5
-    
-
     I_O_pre_obs='--'
-    # if max_freq_step_norm >= .5:
-    #     I_O_pre_obs='max_freq_step_norm_higher_than_0.4'
-    
-   
+    pruning_obs, do_fit = data_pruning_I_O(Full_response_stim_freq_table,cell_sweep_info_table)
+    I_O_obs='--'
+    if do_fit == True:
+        I_O_obs = fitlib.fit_IO_relationship(Full_response_stim_freq_table,do_plot=False)[0]
 
-
-    ## If I/O criteria passed, try to compute adaptation
+    if do_fit == False or I_O_obs !='Hill' and I_O_obs != 'Hill-Sigmoid':
+        I_O_pre_obs=str(('Cannot compute I/O,'+pruning_obs+I_O_obs))
+        I_O_pre_obs.replace('--', '')
     
+
     adapt_obs, adapt_do_fit = data_pruning_adaptation(Full_SF_table, cell_sweep_info_table.copy(), .5)
     Adaptation_obs="--"
-    
+    Adapt_obs_reject='--'
     if adapt_do_fit == True:
         inst_freq_table = fitlib.extract_inst_freq_table(Full_SF_table, cell_sweep_info_table.copy(), .5)
         Adaptation_obs, A, Adaptation_index, C, Adaptation_RMSE = fitlib.fit_adaptation_curve(inst_freq_table, do_plot=False)
@@ -515,6 +528,8 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
             Adapt_obs_reject=str('Cannot compute adaptation,'+adapt_obs+Adaptation_obs)
             Adapt_obs_reject.replace('--', '')
             
+    if I_O_pre_obs !='--' or Adapt_obs_reject != '--':
+        
         #return cell_feature_table,cell_fit_table,Full_Adaptation_fit_table
         new_fit_table_line = pd.Series([0,
                                         I_O_pre_obs,
@@ -578,7 +593,7 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
         pruning_obs, do_fit = data_pruning_I_O(stim_freq_table,cell_sweep_info_table)
 
         if do_fit == True:
-            I_O_obs, Hill_Amplitude, Hill_coef, Hill_Half_cst,Hill_x0, sigmoid_x0,sigmoid_sigma,I_O_QNRMSE, x_shift, Gain, Threshold, Saturation_freq,Saturation_stim = fitlib.fit_IO_curve(
+            I_O_obs, Hill_Amplitude, Hill_coef, Hill_Half_cst,Hill_x0, sigmoid_x0,sigmoid_sigma,I_O_QNRMSE, x_shift, Gain, Threshold, Saturation_freq,Saturation_stim = fitlib.fit_IO_relationship(
                 stim_freq_table, do_plot=False)
 
         else:
@@ -791,25 +806,36 @@ def write_cell_file_h5(cell_file_path,
             
         
     # Store Cell Feature Table
+    
     if 'Cell_Feature_Fit' in selection:
         cell_fit_table = original_cell_fit_table.copy()
         cell_feature_table = original_cell_feature_table.copy()
 
         if 'Cell_Feature' in f.keys() and overwrite == True:
             del f["Cell_Feature"]
-            del f["Adaptation_Fit"]
+
             del f['Cell_Fit']
 
+
             cell_feature_group = f.create_group('Cell_Feature')
+            
             cell_feature_group.create_dataset(
                 'Cell_Feature_Table', data=cell_feature_table)
+            
             cell_feature_group.create_dataset(
                 'Cell_Feature_Table_colnames', data=np.array(cell_feature_table.columns))
+
+            cell_fit_group = f.create_group('Cell_Fit')
+            
+
+            for elt in np.array(cell_fit_table.columns):
+                cell_fit_group.create_dataset(
+                    elt, data=np.array(cell_fit_table[elt]))
 
             
 
         elif 'Cell_Feature' not in f.keys():
-
+            
             cell_feature_group = f.create_group('Cell_Feature')
             cell_feature_group.create_dataset(
                 'Cell_Feature_Table', data=cell_feature_table)
@@ -1268,7 +1294,7 @@ def create_cell_sweep_info_table_concurrent_runs(cell_id, database, cell_Full_TP
     
     Linear_table=pd.DataFrame(columns=['Sweep',"Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV','Response_Steady_State_mV'])
     with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-        sweep_linear_dict = {executor.submit(ephys_treat.get_sweep_linear_properties_new, x,cell_Full_TPC_table, cell_sweep_info_table): x for x in sweep_list}
+        sweep_linear_dict = {executor.submit(ephys_treat.get_sweep_linear_properties, x,cell_Full_TPC_table, cell_sweep_info_table): x for x in sweep_list}
         for f in concurrent.futures.as_completed(sweep_linear_dict):
             Linear_table = Linear_table.append(
                 f.result(), ignore_index=True)    
@@ -1689,7 +1715,12 @@ def data_pruning_I_O(stim_freq_table,cell_sweep_info_table):
     #     do_fit = False
     #     return obs, do_fit  # , max_freq,max_freq_step,(max_freq_step/max_freq)
 
-
+    minimum_frequency_step = get_min_freq_step(stim_freq_table,do_plot=False)[0]
+    if minimum_frequency_step >30:
+        obs = 'Minimum_frequency_step_higher_than_30Hz'
+        do_fit = False
+        return obs, do_fit
+        
     
     obs = '--'
     do_fit = True
@@ -2619,305 +2650,362 @@ def get_min_freq_step(original_stimulus_frequency_table,do_plot=False):
     first_stimulus_frequency_table=first_stimulus_frequency_table.reset_index(drop=True)
     first_stimulus_frequency_table=first_stimulus_frequency_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
     
-
-    ### 0 - Trim Data
-    response_threshold = (np.nanmax(first_stimulus_frequency_table.loc[:,"Frequency_Hz"])-np.nanmin(first_stimulus_frequency_table.loc[:,"Frequency_Hz"]))/20
+    try:
+        ### 0 - Trim Data
+        response_threshold = (np.nanmax(first_stimulus_frequency_table.loc[:,"Frequency_Hz"])-np.nanmin(first_stimulus_frequency_table.loc[:,"Frequency_Hz"]))/20
     
-    for elt in range(first_stimulus_frequency_table.shape[0]):
-        if first_stimulus_frequency_table.iloc[0,2] < response_threshold :
-            first_stimulus_frequency_table=first_stimulus_frequency_table.drop(first_stimulus_frequency_table.index[0])
-        else:
-            break
-    
-    first_stimulus_frequency_table=first_stimulus_frequency_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'],ascending=False )
-    for elt in range(first_stimulus_frequency_table.shape[0]):
-        if first_stimulus_frequency_table.iloc[0,2] < response_threshold :
-            first_stimulus_frequency_table=first_stimulus_frequency_table.drop(first_stimulus_frequency_table.index[0])
-        else:
-            break
-    
-    ### 0 - end
-    
-    ### 1 - Try to fit a 3rd order polynomial
-    first_stimulus_frequency_table=first_stimulus_frequency_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
-    trimmed_x_data=first_stimulus_frequency_table.loc[:,'Stim_amp_pA']
-    trimmed_y_data=first_stimulus_frequency_table.loc[:,"Frequency_Hz"]
-    extended_x_trimmed_data=pd.Series(np.arange(min(trimmed_x_data),max(trimmed_x_data),.1))
-    
-
-    third_order_poly_model = PolynomialModel(degree = 3)
-    pars = third_order_poly_model.guess(trimmed_y_data, x=trimmed_x_data)
-
-    third_order_poly_model_results = third_order_poly_model.fit(trimmed_y_data, pars, x=trimmed_x_data)
-
-    best_c0 = third_order_poly_model_results.best_values['c0']
-    best_c1 = third_order_poly_model_results.best_values['c1']
-    best_c2 = third_order_poly_model_results.best_values['c2']
-    best_c3 = third_order_poly_model_results.best_values['c3']
-    
-    delta_3rd_order_poly = 4*(best_c2**2)-4*3*best_c3*best_c1 #check if 3rd order polynomial reaches local max/minimum
-    
-
-
-    extended_trimmed_3rd_poly_model = best_c3*(extended_x_trimmed_data)**3+best_c2*(extended_x_trimmed_data)**2+best_c1*(extended_x_trimmed_data)+best_c0
-    
-    extended_trimmed_3rd_poly_model_freq_diff=np.diff(extended_trimmed_3rd_poly_model)
-    trimmed_3rd_poly_table = pd.DataFrame({'Stim_amp_pA' : extended_x_trimmed_data,
-                                           "Frequency_Hz" : extended_trimmed_3rd_poly_model})
-    trimmed_3rd_poly_table['Legend']='3rd_order_poly'
-    my_plot=ggplot(first_stimulus_frequency_table,aes(x='Stim_amp_pA',y='Frequency_Hz'))+geom_point()
-    my_plot+=geom_line(trimmed_3rd_poly_table,aes(x='Stim_amp_pA',y='Frequency_Hz'))
-    if do_plot:
         
-        print(my_plot)
-    
-    zero_crossings_3rd_poly_model_freq_diff = np.where(np.diff(np.sign(extended_trimmed_3rd_poly_model_freq_diff)))[0] # detect last index before change of sign
-   
-    
-    
-    if len(zero_crossings_3rd_poly_model_freq_diff)==0:
-        Descending_segment=False
-        ascending_segment = trimmed_3rd_poly_table.copy()
-        
-    elif len(zero_crossings_3rd_poly_model_freq_diff)==1:
-        first_stim_root = extended_x_trimmed_data[zero_crossings_3rd_poly_model_freq_diff[0]]
-        if extended_trimmed_3rd_poly_model_freq_diff[0]>=0:
-            Descending_segment=True
-            
-            ascending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] <= first_stim_root ]
-            descending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] > first_stim_root]
-            
-        elif extended_trimmed_3rd_poly_model_freq_diff[0]<0:
-            Descending_segment=False
-            ascending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] >= first_stim_root ]
-            
-    elif len(zero_crossings_3rd_poly_model_freq_diff)==2:
-        first_stim_root = extended_x_trimmed_data[zero_crossings_3rd_poly_model_freq_diff[0]]
-        second_stim_root = extended_x_trimmed_data[zero_crossings_3rd_poly_model_freq_diff[1]]
-        
-        
-        if extended_trimmed_3rd_poly_model_freq_diff[0]>=0:
-            Descending_segment=True
-            ascending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] <= first_stim_root ]
-            descending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] > first_stim_root]
-            
-        elif extended_trimmed_3rd_poly_model_freq_diff[0]<0:
-            Descending_segment=True
-            ascending_segment = trimmed_3rd_poly_table[(trimmed_3rd_poly_table['Stim_amp_pA'] > first_stim_root) & (trimmed_3rd_poly_table['Stim_amp_pA'] <= second_stim_root) ]
-            descending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] > second_stim_root]
-            
-            
-            
-            
-            
-            
-        
-   
-        ### 1 - end
-        
-
-    
-    ### 2 - Trim polynomial fit; keep [mean-0.5*poly_amplitude ; [mean+0.5*poly_amplitude]
-    if Descending_segment:
-        
-        ascending_segment_mean_freq = np.mean(ascending_segment['Frequency_Hz'])
-        ascending_segment_amplitude_freq = np.nanmax(ascending_segment['Frequency_Hz']) - np.nanmin(ascending_segment['Frequency_Hz'])
-        
-        descending_segment_mean_freq = np.mean(descending_segment['Frequency_Hz'])
-        descending_segment_amplitude_freq = np.nanmax(descending_segment['Frequency_Hz']) - np.nanmin(descending_segment['Frequency_Hz'])
-        
-        trimmed_ascending_segment = ascending_segment[(ascending_segment['Frequency_Hz'] >= (ascending_segment_mean_freq-0.5*ascending_segment_amplitude_freq)) & (ascending_segment['Frequency_Hz'] <= (ascending_segment_mean_freq+0.5*ascending_segment_amplitude_freq))]
-        trimmed_descending_segment = descending_segment[(descending_segment['Frequency_Hz'] >= (descending_segment_mean_freq-0.5*descending_segment_amplitude_freq)) & (descending_segment['Frequency_Hz'] <= (descending_segment_mean_freq+0.5*descending_segment_amplitude_freq))]
-        
-        max_freq_poly_fit=np.nanmax(trimmed_3rd_poly_table['Frequency_Hz'])
-        trimmed_ascending_segment['Legend']="Trimmed_asc_seg"
-        trimmed_descending_segment['Legend']="Trimmed_desc_seg"
-       
-    
-    else:
-        #end_slope_positive --> go for 2nd order polynomial
-        second_order_poly_model = PolynomialModel(degree = 2)
-        pars = second_order_poly_model.guess(trimmed_y_data, x=trimmed_x_data)
-        second_order_poly_model_results = second_order_poly_model.fit(trimmed_y_data, pars, x=trimmed_x_data)
-
-        best_c0 = second_order_poly_model_results.best_values['c0']
-        best_c1 = second_order_poly_model_results.best_values['c1']
-        best_c2 = second_order_poly_model_results.best_values['c2']
-        
-        extended_trimmed_2nd_poly_model = best_c2*(extended_x_trimmed_data)**2+best_c1*(extended_x_trimmed_data)+best_c0
-        extended_trimmed_2nd_poly_model_freq_diff=np.diff(extended_trimmed_2nd_poly_model)
-        trimmed_2nd_poly_table = pd.DataFrame({'Stim_amp_pA' : extended_x_trimmed_data,
-                                               "Frequency_Hz" : extended_trimmed_2nd_poly_model})
-        
-       
-        
-        zero_crossings_2nd_poly_model_freq_diff = np.where(np.diff(np.sign(extended_trimmed_2nd_poly_model_freq_diff)))[0] # detect last index before change of sign
-        
-        if len(zero_crossings_2nd_poly_model_freq_diff) == 1:
-
-            if extended_trimmed_2nd_poly_model_freq_diff[0]<0:
-                trimmed_2nd_poly_table = trimmed_2nd_poly_table[trimmed_2nd_poly_table['Stim_amp_pA'] >= extended_x_trimmed_data[(zero_crossings_2nd_poly_model_freq_diff[0]+1)] ]
+        for elt in range(first_stimulus_frequency_table.shape[0]):
+            if first_stimulus_frequency_table.iloc[0,2] < response_threshold :
+                first_stimulus_frequency_table=first_stimulus_frequency_table.drop(first_stimulus_frequency_table.index[0])
             else:
-                trimmed_2nd_poly_table = trimmed_2nd_poly_table[trimmed_2nd_poly_table['Stim_amp_pA'] <= extended_x_trimmed_data[(zero_crossings_2nd_poly_model_freq_diff[0]+1)] ]
-         
+                break
+        
+        first_stimulus_frequency_table=first_stimulus_frequency_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'],ascending=False )
+        for elt in range(first_stimulus_frequency_table.shape[0]):
+            if first_stimulus_frequency_table.iloc[0,2] < response_threshold :
+                first_stimulus_frequency_table=first_stimulus_frequency_table.drop(first_stimulus_frequency_table.index[0])
+            else:
+                break
+        
+        
             
-        ascending_segment = trimmed_2nd_poly_table.copy()
-        ascending_segment_mean_freq = np.mean(ascending_segment['Frequency_Hz'])
-        ascending_segment_amplitude_freq = np.nanmax(ascending_segment['Frequency_Hz']) - np.nanmin(ascending_segment['Frequency_Hz'])
+        ### 0 - end
         
-        trimmed_ascending_segment = ascending_segment[(ascending_segment['Frequency_Hz'] >= (ascending_segment_mean_freq-0.5*ascending_segment_amplitude_freq)) & (ascending_segment['Frequency_Hz'] <= (ascending_segment_mean_freq+0.5*ascending_segment_amplitude_freq))]
-        max_freq_poly_fit=np.nanmax(trimmed_2nd_poly_table['Frequency_Hz'])
+        ### 1 - Try to fit a 3rd order polynomial
         
-        trimmed_2nd_poly_table['Legend']='2nd_order_poly'
-        trimmed_ascending_segment['Legend']="Trimmed_asc_seg"
-        
-    ### 2 - end 
-    
-    ### 3 - Linear fit on polynomial trimmed data
-    ascending_linear_slope_init,ascending_linear_intercept_init=fitlib.fit_specimen_fi_slope(trimmed_ascending_segment["Stim_amp_pA"],
-                                         trimmed_ascending_segment['Frequency_Hz'])
-    
-    ascending_sigmoid_slope=max_freq_poly_fit/(4*ascending_linear_slope_init)
-    
-    if Descending_segment:
-        #ascending_sigmoid_fit += Model(sigmoid_amplitude_function)
-        descending_linear_slope_init,descending_linear_intercept_init=fitlib.fit_specimen_fi_slope(trimmed_descending_segment["Stim_amp_pA"],
-                                              trimmed_descending_segment['Frequency_Hz'])
-    
-    
-    
-    
-    ### 3 - end
-    
-    ### 4 - Fit single or double Sigmoid
-    
-    ascending_sigmoid_fit= Model(fitlib.sigmoid_function,prefix='asc_')
-    ascending_segment_fit_params  = ascending_sigmoid_fit.make_params()
-    
-    
-    ascending_segment_fit_params.add("asc_x0",value=np.nanmean(trimmed_ascending_segment['Stim_amp_pA']))
-    ascending_segment_fit_params.add("asc_sigma",value=ascending_sigmoid_slope,min=1e-9,max=5*ascending_sigmoid_slope)
-    
-    amplitude_fit = ConstantModel(prefix='Amp_')
-    amplitude_fit_pars = amplitude_fit.make_params()
-    amplitude_fit_pars['Amp_c'].set(value=max_freq_poly_fit,min=0,max=10*max_freq_poly_fit)
-    
-    ascending_sigmoid_fit *= amplitude_fit
-    ascending_segment_fit_params+=amplitude_fit_pars
-    
-    if Descending_segment:
-        #ascending_sigmoid_fit += Model(sigmoid_amplitude_function)
-        
+        first_stimulus_frequency_table=first_stimulus_frequency_table.sort_values(by=['Stim_amp_pA','Frequency_Hz'])
+        trimmed_x_data=first_stimulus_frequency_table.loc[:,'Stim_amp_pA']
+        trimmed_y_data=first_stimulus_frequency_table.loc[:,"Frequency_Hz"]
+        extended_x_trimmed_data=pd.Series(np.arange(min(trimmed_x_data),max(trimmed_x_data),.1))
         
        
-        descending_sigmoid_slope = max_freq_poly_fit/(4*descending_linear_slope_init)
-        
-        descending_sigmoid_fit = Model(fitlib.sigmoid_function,prefix='desc_')
-        descending_sigmoid_fit_pars = descending_sigmoid_fit.make_params()
-        descending_sigmoid_fit_pars.add("desc_x0",value=np.nanmean(trimmed_descending_segment['Stim_amp_pA']))
-        descending_sigmoid_fit_pars.add("desc_sigma",value=descending_sigmoid_slope,min=3*descending_sigmoid_slope,max=-1e-9)
-        
-        ascending_sigmoid_fit *=descending_sigmoid_fit
-        ascending_segment_fit_params+=descending_sigmoid_fit_pars
-        
-    ascending_sigmoid_fit_results = ascending_sigmoid_fit.fit(original_y_data, ascending_segment_fit_params, x=original_x_data)
-    best_value_Amp = ascending_sigmoid_fit_results.best_values['Amp_c']
     
-    best_value_x0_asc = ascending_sigmoid_fit_results.best_values["asc_x0"]
-    best_value_sigma_asc = ascending_sigmoid_fit_results.best_values['asc_sigma']
-    
-    asc_sigmoid_fit = best_value_Amp * fitlib.sigmoid_function(original_x_data , best_value_x0_asc, best_value_sigma_asc)
-    #asc_sigmoid_fit = sigmoid_amplitude_function(original_x_data , best_value_A_asc, best_value_x0_asc, best_value_sigma_asc)
-    full_sigmoid_fit = best_value_Amp * fitlib.sigmoid_function(extended_x_data , best_value_x0_asc, best_value_sigma_asc)
-    full_sigmoid_fit_table=pd.DataFrame({'Stim_amp_pA' : extended_x_data,
-                                "Frequency_Hz" : full_sigmoid_fit})
-    
-   
-    full_sigmoid_fit_table['Legend'] = 'Sigmoid_fit'
-    
-    
-    if Descending_segment:
+        third_order_poly_model = PolynomialModel(degree = 3)
+        pars = third_order_poly_model.guess(trimmed_y_data, x=trimmed_x_data)
         
-        best_value_x0_desc = ascending_sigmoid_fit_results.best_values["desc_x0"]
-        best_value_sigma_desc = ascending_sigmoid_fit_results.best_values['desc_sigma']
+        if len(trimmed_y_data)>=4:
+            
+            third_order_poly_model_results = third_order_poly_model.fit(trimmed_y_data, pars, x=trimmed_x_data)
         
-        full_sigmoid_fit = best_value_Amp * fitlib.sigmoid_function(extended_x_data, best_value_x0_asc, best_value_sigma_asc) * fitlib.sigmoid_function(extended_x_data , best_value_x0_desc, best_value_sigma_desc)
+            best_c0 = third_order_poly_model_results.best_values['c0']
+            best_c1 = third_order_poly_model_results.best_values['c1']
+            best_c2 = third_order_poly_model_results.best_values['c2']
+            best_c3 = third_order_poly_model_results.best_values['c3']
+            
+            delta_3rd_order_poly = 4*(best_c2**2)-4*3*best_c3*best_c1 #check if 3rd order polynomial reaches local max/minimum
+            
+            
+        
+            extended_trimmed_3rd_poly_model = best_c3*(extended_x_trimmed_data)**3+best_c2*(extended_x_trimmed_data)**2+best_c1*(extended_x_trimmed_data)+best_c0
+            
+            extended_trimmed_3rd_poly_model_freq_diff=np.diff(extended_trimmed_3rd_poly_model)
+            trimmed_3rd_poly_table = pd.DataFrame({'Stim_amp_pA' : extended_x_trimmed_data,
+                                                   "Frequency_Hz" : extended_trimmed_3rd_poly_model})
+            trimmed_3rd_poly_table['Legend']='3rd_order_poly'
+            my_plot=ggplot(first_stimulus_frequency_table,aes(x='Stim_amp_pA',y='Frequency_Hz'))+geom_point()
+            my_plot+=geom_line(trimmed_3rd_poly_table,aes(x='Stim_amp_pA',y='Frequency_Hz'))
+            if do_plot:
+                
+                print(my_plot)
+            
+            zero_crossings_3rd_poly_model_freq_diff = np.where(np.diff(np.sign(extended_trimmed_3rd_poly_model_freq_diff)))[0] # detect last index before change of sign
+           
+          
+            
+            if len(zero_crossings_3rd_poly_model_freq_diff)==0:
+                Descending_segment=False
+                ascending_segment = trimmed_3rd_poly_table.copy()
+                
+            elif len(zero_crossings_3rd_poly_model_freq_diff)==1:
+                first_stim_root = extended_x_trimmed_data[zero_crossings_3rd_poly_model_freq_diff[0]]
+                if extended_trimmed_3rd_poly_model_freq_diff[0]>=0:
+                    Descending_segment=True
+                    
+                    ascending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] <= first_stim_root ]
+                    descending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] > first_stim_root]
+                    
+                elif extended_trimmed_3rd_poly_model_freq_diff[0]<0:
+                    Descending_segment=False
+                    ascending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] >= first_stim_root ]
+                    
+            elif len(zero_crossings_3rd_poly_model_freq_diff)==2:
+                first_stim_root = extended_x_trimmed_data[zero_crossings_3rd_poly_model_freq_diff[0]]
+                second_stim_root = extended_x_trimmed_data[zero_crossings_3rd_poly_model_freq_diff[1]]
+                
+                
+                if extended_trimmed_3rd_poly_model_freq_diff[0]>=0:
+                    Descending_segment=True
+                    ascending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] <= first_stim_root ]
+                    descending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] > first_stim_root]
+                    
+                elif extended_trimmed_3rd_poly_model_freq_diff[0]<0:
+                    Descending_segment=True
+                    ascending_segment = trimmed_3rd_poly_table[(trimmed_3rd_poly_table['Stim_amp_pA'] > first_stim_root) & (trimmed_3rd_poly_table['Stim_amp_pA'] <= second_stim_root) ]
+                    descending_segment = trimmed_3rd_poly_table[trimmed_3rd_poly_table['Stim_amp_pA'] > second_stim_root]
+        
+        else:
+            Descending_segment=False
+                
+                
+                
+                
+                
+            
+       
+            ### 1 - end
+            
+
+        
+        ### 2 - Trim polynomial fit; keep [mean-0.5*poly_amplitude ; [mean+0.5*poly_amplitude]
+        if Descending_segment:
+            
+            ascending_segment_mean_freq = np.mean(ascending_segment['Frequency_Hz'])
+            ascending_segment_amplitude_freq = np.nanmax(ascending_segment['Frequency_Hz']) - np.nanmin(ascending_segment['Frequency_Hz'])
+            
+            descending_segment_mean_freq = np.mean(descending_segment['Frequency_Hz'])
+            descending_segment_amplitude_freq = np.nanmax(descending_segment['Frequency_Hz']) - np.nanmin(descending_segment['Frequency_Hz'])
+            
+            trimmed_ascending_segment = ascending_segment[(ascending_segment['Frequency_Hz'] >= (ascending_segment_mean_freq-0.5*ascending_segment_amplitude_freq)) & (ascending_segment['Frequency_Hz'] <= (ascending_segment_mean_freq+0.5*ascending_segment_amplitude_freq))]
+            trimmed_descending_segment = descending_segment[(descending_segment['Frequency_Hz'] >= (descending_segment_mean_freq-0.5*descending_segment_amplitude_freq)) & (descending_segment['Frequency_Hz'] <= (descending_segment_mean_freq+0.5*descending_segment_amplitude_freq))]
+            
+            max_freq_poly_fit=np.nanmax(trimmed_3rd_poly_table['Frequency_Hz'])
+            trimmed_ascending_segment['Legend']="Trimmed_asc_seg"
+            trimmed_descending_segment['Legend']="Trimmed_desc_seg"
+           
+        
+        else:
+            #end_slope_positive --> go for 2nd order polynomial
+            second_order_poly_model = PolynomialModel(degree = 2)
+            pars = second_order_poly_model.guess(trimmed_y_data, x=trimmed_x_data)
+            second_order_poly_model_results = second_order_poly_model.fit(trimmed_y_data, pars, x=trimmed_x_data)
+    
+            best_c0 = second_order_poly_model_results.best_values['c0']
+            best_c1 = second_order_poly_model_results.best_values['c1']
+            best_c2 = second_order_poly_model_results.best_values['c2']
+            
+            extended_trimmed_2nd_poly_model = best_c2*(extended_x_trimmed_data)**2+best_c1*(extended_x_trimmed_data)+best_c0
+            extended_trimmed_2nd_poly_model_freq_diff=np.diff(extended_trimmed_2nd_poly_model)
+            trimmed_2nd_poly_table = pd.DataFrame({'Stim_amp_pA' : extended_x_trimmed_data,
+                                                   "Frequency_Hz" : extended_trimmed_2nd_poly_model})
+            
+           
+            
+            zero_crossings_2nd_poly_model_freq_diff = np.where(np.diff(np.sign(extended_trimmed_2nd_poly_model_freq_diff)))[0] # detect last index before change of sign
+            
+            if len(zero_crossings_2nd_poly_model_freq_diff) == 1:
+    
+                if extended_trimmed_2nd_poly_model_freq_diff[0]<0:
+                    trimmed_2nd_poly_table = trimmed_2nd_poly_table[trimmed_2nd_poly_table['Stim_amp_pA'] >= extended_x_trimmed_data[(zero_crossings_2nd_poly_model_freq_diff[0]+1)] ]
+                else:
+                    trimmed_2nd_poly_table = trimmed_2nd_poly_table[trimmed_2nd_poly_table['Stim_amp_pA'] <= extended_x_trimmed_data[(zero_crossings_2nd_poly_model_freq_diff[0]+1)] ]
+             
+                
+            ascending_segment = trimmed_2nd_poly_table.copy()
+            ascending_segment_mean_freq = np.mean(ascending_segment['Frequency_Hz'])
+            ascending_segment_amplitude_freq = np.nanmax(ascending_segment['Frequency_Hz']) - np.nanmin(ascending_segment['Frequency_Hz'])
+            
+            trimmed_ascending_segment = ascending_segment[(ascending_segment['Frequency_Hz'] >= (ascending_segment_mean_freq-0.5*ascending_segment_amplitude_freq)) & (ascending_segment['Frequency_Hz'] <= (ascending_segment_mean_freq+0.5*ascending_segment_amplitude_freq))]
+            max_freq_poly_fit=np.nanmax(trimmed_2nd_poly_table['Frequency_Hz'])
+            
+            trimmed_2nd_poly_table['Legend']='2nd_order_poly'
+            trimmed_ascending_segment['Legend']="Trimmed_asc_seg"
+            
+        ### 2 - end 
+        
+        ### 3 - Linear fit on polynomial trimmed data
+        ascending_linear_slope_init,ascending_linear_intercept_init=fitlib.fit_specimen_fi_slope(trimmed_ascending_segment["Stim_amp_pA"],
+                                             trimmed_ascending_segment['Frequency_Hz'])
+        
+        ascending_sigmoid_slope=max_freq_poly_fit/(4*ascending_linear_slope_init)
+        
+        if Descending_segment:
+            #ascending_sigmoid_fit += Model(sigmoid_amplitude_function)
+            descending_linear_slope_init,descending_linear_intercept_init=fitlib.fit_specimen_fi_slope(trimmed_descending_segment["Stim_amp_pA"],
+                                                  trimmed_descending_segment['Frequency_Hz'])
+        
+        
+        
+        
+        ### 3 - end
+        
+        ### 4 - Fit single or double Sigmoid
+        
+        ascending_sigmoid_fit= Model(fitlib.sigmoid_function,prefix='asc_')
+        ascending_segment_fit_params  = ascending_sigmoid_fit.make_params()
+        
+        
+        ascending_segment_fit_params.add("asc_x0",value=np.nanmean(trimmed_ascending_segment['Stim_amp_pA']))
+        ascending_segment_fit_params.add("asc_sigma",value=ascending_sigmoid_slope,min=1e-9,max=5*ascending_sigmoid_slope)
+        
+        amplitude_fit = ConstantModel(prefix='Amp_')
+        amplitude_fit_pars = amplitude_fit.make_params()
+        amplitude_fit_pars['Amp_c'].set(value=max_freq_poly_fit,min=0,max=10*max_freq_poly_fit)
+        
+        ascending_sigmoid_fit *= amplitude_fit
+        ascending_segment_fit_params+=amplitude_fit_pars
+        
+        if Descending_segment:
+            #ascending_sigmoid_fit += Model(sigmoid_amplitude_function)
+            
+            
+           
+            descending_sigmoid_slope = max_freq_poly_fit/(4*descending_linear_slope_init)
+            
+            descending_sigmoid_fit = Model(fitlib.sigmoid_function,prefix='desc_')
+            descending_sigmoid_fit_pars = descending_sigmoid_fit.make_params()
+            descending_sigmoid_fit_pars.add("desc_x0",value=np.nanmean(trimmed_descending_segment['Stim_amp_pA']))
+            descending_sigmoid_fit_pars.add("desc_sigma",value=descending_sigmoid_slope,min=3*descending_sigmoid_slope,max=-1e-9)
+            
+            ascending_sigmoid_fit *=descending_sigmoid_fit
+            ascending_segment_fit_params+=descending_sigmoid_fit_pars
+
+        ascending_sigmoid_fit_results = ascending_sigmoid_fit.fit(original_y_data, ascending_segment_fit_params, x=original_x_data)
+        best_value_Amp = ascending_sigmoid_fit_results.best_values['Amp_c']
+        
+        best_value_x0_asc = ascending_sigmoid_fit_results.best_values["asc_x0"]
+        best_value_sigma_asc = ascending_sigmoid_fit_results.best_values['asc_sigma']
+        
+        asc_sigmoid_fit = best_value_Amp * fitlib.sigmoid_function(original_x_data , best_value_x0_asc, best_value_sigma_asc)
+        #asc_sigmoid_fit = sigmoid_amplitude_function(original_x_data , best_value_A_asc, best_value_x0_asc, best_value_sigma_asc)
+        full_sigmoid_fit = best_value_Amp * fitlib.sigmoid_function(extended_x_data , best_value_x0_asc, best_value_sigma_asc)
         full_sigmoid_fit_table=pd.DataFrame({'Stim_amp_pA' : extended_x_data,
                                     "Frequency_Hz" : full_sigmoid_fit})
+        
+       
         full_sigmoid_fit_table['Legend'] = 'Sigmoid_fit'
         
         
-    
-    if do_plot:
-        
-        
-        double_sigmoid_comps = ascending_sigmoid_fit_results.eval_components(x=original_x_data)
-        asc_sig_comp = double_sigmoid_comps['asc_']
-        asc_sig_comp_table = pd.DataFrame({'Stim_amp_pA' : original_x_data,
-                                    "Frequency_Hz" : asc_sig_comp,
-                                    'Legend' : 'Ascending_Sigmoid'})
-        
-        asc_sig_comp_table['Frequency_Hz'] = asc_sig_comp_table['Frequency_Hz']*max(original_data['Frequency_Hz'])/max(asc_sig_comp_table['Frequency_Hz'])
-        amp_comp = double_sigmoid_comps['Amp_']
-        amp_comp_table = pd.DataFrame({'Stim_amp_pA' : original_x_data,
-                                    "Frequency_Hz" : amp_comp,
-                                    'Legend' : "Amplitude"})
-        
-       
-       
-        
-        sigmoid_fit_plot =  ggplot(original_data,aes(x='Stim_amp_pA',y="Frequency_Hz"))+geom_point()
-        sigmoid_fit_plot += geom_line(full_sigmoid_fit_table, aes(x='Stim_amp_pA',y="Frequency_Hz"))
-        #sigmoid_fit_plot += geom_line(trimmed_ascending_segment,aes(x='Stim_amp_pA',y="Frequency_Hz",color='Legend',group='Legend'))
-        #sigmoid_fit_plot += geom_line(component_table,aes(x='Stim_amp_pA',y="Frequency_Hz",color='Legend',group='Legend'),linetype='dashed')
-        
-        sigmoid_fit_plot += ggtitle("Sigmoid_fit_to original_data")
-        
-        # if Descending_segment:
+        if Descending_segment:
+            
+            best_value_x0_desc = ascending_sigmoid_fit_results.best_values["desc_x0"]
+            best_value_sigma_desc = ascending_sigmoid_fit_results.best_values['desc_sigma']
+            
+            full_sigmoid_fit = best_value_Amp * fitlib.sigmoid_function(extended_x_data, best_value_x0_asc, best_value_sigma_asc) * fitlib.sigmoid_function(extended_x_data , best_value_x0_desc, best_value_sigma_desc)
+            full_sigmoid_fit_table=pd.DataFrame({'Stim_amp_pA' : extended_x_data,
+                                        "Frequency_Hz" : full_sigmoid_fit})
+            full_sigmoid_fit_table['Legend'] = 'Sigmoid_fit'
             
             
-        #     sigmoid_fit_plot += geom_line(trimmed_descending_segment,aes(x='Stim_amp_pA',y="Frequency_Hz",color='Legend',group='Legend'))
+        
+        if do_plot:
             
+            
+            double_sigmoid_comps = ascending_sigmoid_fit_results.eval_components(x=original_x_data)
+            asc_sig_comp = double_sigmoid_comps['asc_']
+            asc_sig_comp_table = pd.DataFrame({'Stim_amp_pA' : original_x_data,
+                                        "Frequency_Hz" : asc_sig_comp,
+                                        'Legend' : 'Ascending_Sigmoid'})
+            
+            asc_sig_comp_table['Frequency_Hz'] = asc_sig_comp_table['Frequency_Hz']*max(original_data['Frequency_Hz'])/max(asc_sig_comp_table['Frequency_Hz'])
+            amp_comp = double_sigmoid_comps['Amp_']
+            amp_comp_table = pd.DataFrame({'Stim_amp_pA' : original_x_data,
+                                        "Frequency_Hz" : amp_comp,
+                                        'Legend' : "Amplitude"})
+            
+           
+           
+            
+            sigmoid_fit_plot =  ggplot(original_data,aes(x='Stim_amp_pA',y="Frequency_Hz"))+geom_point()
+            sigmoid_fit_plot += geom_line(full_sigmoid_fit_table, aes(x='Stim_amp_pA',y="Frequency_Hz"))
+            #sigmoid_fit_plot += geom_line(trimmed_ascending_segment,aes(x='Stim_amp_pA',y="Frequency_Hz",color='Legend',group='Legend'))
+            #sigmoid_fit_plot += geom_line(component_table,aes(x='Stim_amp_pA',y="Frequency_Hz",color='Legend',group='Legend'),linetype='dashed')
+            
+            sigmoid_fit_plot += ggtitle("Sigmoid_fit_to original_data")
+            
+            # if Descending_segment:
+                
+                
+            #     sigmoid_fit_plot += geom_line(trimmed_descending_segment,aes(x='Stim_amp_pA',y="Frequency_Hz",color='Legend',group='Legend'))
+                
+            
+           
+            
+            
+    
+            print(sigmoid_fit_plot)
+         ### 4 - end
+
+        maximum_fit_frequency=np.nanmax(full_sigmoid_fit)
+        maximum_fit_frequency_index = np.nanargmax(full_sigmoid_fit)
+        maximum_fit_stimulus = extended_x_data[maximum_fit_frequency_index]
+        original_data_table = original_data_table.sort_values(by=['Stim_amp_pA'])
         
+        noisy_spike_freq_threshold = np.nanmax([.04*maximum_fit_frequency,2.])
+        until_maximum_data = original_data_table[original_data_table['Stim_amp_pA']<=maximum_fit_stimulus].copy()
        
-        
-        
-
-        print(sigmoid_fit_plot)
+        until_maximum_data = until_maximum_data[until_maximum_data['Frequency_Hz']>noisy_spike_freq_threshold]
         
 
-    ### 4 - end
-    maximum_fit_frequency=np.nanmax(full_sigmoid_fit)
-    maximum_fit_frequency_index = np.nanargmax(full_sigmoid_fit)
-    maximum_fit_stimulus = extended_x_data[maximum_fit_frequency_index]
-    original_data_table = original_data_table.sort_values(by=['Stim_amp_pA'])
-    minimum_threshold = maximum_fit_frequency/10
-    
-    
-   
-    
-    until_maximum_data = original_data_table[original_data_table['Stim_amp_pA']<=maximum_fit_stimulus].copy()
-    until_maximum_data = until_maximum_data[until_maximum_data['Frequency_Hz']>=minimum_threshold]
-    
-
-    minimum_freq_step_index = np.nanargmin(until_maximum_data['Frequency_Hz'])
-    minimum_freq_step = until_maximum_data.iloc[minimum_freq_step_index,2]
-    minimum_freq_step_stim = until_maximum_data.iloc[minimum_freq_step_index,1]
-    
-    if do_plot:
-        minimum_freq_step_plot = ggplot(original_data_table,aes(x='Stim_amp_pA',y='Frequency_Hz'))+geom_point()
-        minimum_freq_step_plot += geom_point(until_maximum_data,aes(x='Stim_amp_pA',y='Frequency_Hz'),color='red')
-        minimum_freq_step_plot += geom_line(full_sigmoid_fit_table, aes(x='Stim_amp_pA',y="Frequency_Hz"))
-        minimum_freq_step_plot += geom_vline(xintercept = minimum_freq_step_stim )
-        minimum_freq_step_plot += geom_hline(yintercept = minimum_freq_step)
-        minimum_freq_step_plot += geom_hline(yintercept = minimum_threshold,linetype='dashed',alpha=.4)
         
-        print(minimum_freq_step_plot)
+        minimum_freq_step_index = np.nanargmin(until_maximum_data['Frequency_Hz'])
+        minimum_freq_step = until_maximum_data.iloc[minimum_freq_step_index,2]
+        minimum_freq_step_stim = until_maximum_data.iloc[minimum_freq_step_index,1]
         
-    return minimum_freq_step,minimum_freq_step_stim,minimum_threshold,np.nanmax(original_data_table['Frequency_Hz'])
+
+    except(Exception):
+
+        x_data=np.array(original_data.loc[:,'Stim_amp_pA'])
+        y_data=np.array(original_data.loc[:,'Frequency_Hz'])
+        
+        maximum_fit_frequency_index = np.nanargmax(y_data)
+        maximum_fit_stimulus = x_data[maximum_fit_frequency_index]
+        noisy_spike_freq_threshold = np.nanmax([.04*np.nanmax(y_data),2.])
+        #noisy_spike_freq_threshold = 2.
+        until_maximum_data = original_data_table[original_data_table['Stim_amp_pA']<=maximum_fit_stimulus].copy()
+       
+        until_maximum_data = until_maximum_data[until_maximum_data['Frequency_Hz']>noisy_spike_freq_threshold]
+        
+
+        
+        minimum_freq_step_index = np.nanargmin(until_maximum_data['Frequency_Hz'])
+        minimum_freq_step = until_maximum_data.iloc[minimum_freq_step_index,2]
+        minimum_freq_step_stim = until_maximum_data.iloc[minimum_freq_step_index,1]
+        
+
+        
+    
+    finally:
+        
+        if do_plot:
+            minimum_freq_step_plot = ggplot(original_data_table,aes(x='Stim_amp_pA',y='Frequency_Hz'))+geom_point()
+            minimum_freq_step_plot += geom_point(until_maximum_data,aes(x='Stim_amp_pA',y='Frequency_Hz'),color='red')
+            #minimum_freq_step_plot += geom_line(full_sigmoid_fit_table, aes(x='Stim_amp_pA',y="Frequency_Hz"))
+            minimum_freq_step_plot += geom_vline(xintercept = minimum_freq_step_stim )
+            minimum_freq_step_plot += geom_hline(yintercept = minimum_freq_step)
+            minimum_freq_step_plot += geom_hline(yintercept = noisy_spike_freq_threshold,linetype='dashed',alpha=.4)
+            
+            print(minimum_freq_step_plot)
+            
+        return minimum_freq_step,minimum_freq_step_stim,noisy_spike_freq_threshold,np.nanmax(original_data_table['Frequency_Hz'])
 
 
-
+def get_frequency_array(full_cell_id_list):
+    
+    frequency_table=pd.DataFrame(columns=['Cell_id','Frequency_Array','Obs'])
+    saving_folder_path="/Volumes/Work_Julien/Cell_Data_File/"
+    original_files = [f for f in glob.glob(str(saving_folder_path+'*.h5*'))]
+    no_file_id=[]
+    
+    for cell_id in tqdm(full_cell_id_list):
+        cell_file_path = str(saving_folder_path+'Cell_' +
+                         str(cell_id)+'_data_file.h5')
+        
+        if cell_file_path in original_files:
+                
+            
+            Full_TPC_table,full_SF_dict_table,full_SF_table,Metadata_table,sweep_info_table,Sweep_QC_table,cell_fit_table,cell_feature_table=import_h5_file(cell_file_path,['All'])
+            stim_freq_table = fitlib.get_stim_freq_table(full_SF_table.copy(), sweep_info_table.copy(), .5)
+            try:
+                frequency_array = get_min_freq_step(stim_freq_table,do_plot=False)
+                new_line=pd.Series([str(cell_id),frequency_array,"OK"],index=['Cell_id','Frequency_Array','Obs'])
+                frequency_table=frequency_table.append(new_line,ignore_index=True)
+            except Exception as e:
+                new_line=pd.Series([str(cell_id),np.array(stim_freq_table['Frequency_Hz']),str(e)],index=['Cell_id','Frequency_Array','Obs'])
+                frequency_table=frequency_table.append(new_line,ignore_index=True)
+        else:
+            no_file_id.append(cell_id)
+    return frequency_table,no_file_id
 
    
     
@@ -2977,7 +3065,7 @@ def summarize_database(cell_id_list):
         if 10 not in cell_feature_table['Response_time_ms']:
             line_10ms = pd.Series([str(cell_id),'No_I_O_Adapt_computed',np.nan,np.nan,np.nan,np.nan,np.nan],index=['Cell_id','Obs','Gain','Threshold','Saturation_Frequency','Saturation_Stimulus','Adaptation_index'])
         else:
-            I_O_obs = cell_fit_table.loc[5,'I_O_obs']
+            I_O_obs = cell_fit_table.loc[10,'I_O_obs']
             Gain = cell_feature_table.loc[10,"Gain"]
             Threshold = cell_feature_table.loc[10,"Threshold"]
             Saturation_Frequency = cell_feature_table.loc[10,"Saturation_Frequency"]
@@ -2992,7 +3080,7 @@ def summarize_database(cell_id_list):
         if 25 not in cell_feature_table['Response_time_ms']:
             line_25ms = pd.Series([str(cell_id),'No_I_O_Adapt_computed',np.nan,np.nan,np.nan,np.nan,np.nan],index=['Cell_id','Obs','Gain','Threshold','Saturation_Frequency','Saturation_Stimulus','Adaptation_index'])
         else:
-            I_O_obs = cell_fit_table.loc[5,'I_O_obs']
+            I_O_obs = cell_fit_table.loc[25,'I_O_obs']
             Gain = cell_feature_table.loc[25,"Gain"]
             Threshold = cell_feature_table.loc[25,"Threshold"]
             Saturation_Frequency = cell_feature_table.loc[25,"Saturation_Frequency"]
@@ -3007,7 +3095,7 @@ def summarize_database(cell_id_list):
         if 50 not in cell_feature_table['Response_time_ms']:
             line_50ms = pd.Series([str(cell_id),'No_I_O_Adapt_computed',np.nan,np.nan,np.nan,np.nan,np.nan],index=['Cell_id','Obs','Gain','Threshold','Saturation_Frequency','Saturation_Stimulus','Adaptation_index'])
         else:
-            I_O_obs = cell_fit_table.loc[5,'I_O_obs']
+            I_O_obs = cell_fit_table.loc[50,'I_O_obs']
             Gain = cell_feature_table.loc[50,"Gain"]
             Threshold = cell_feature_table.loc[50,"Threshold"]
             Saturation_Frequency = cell_feature_table.loc[50,"Saturation_Frequency"]
@@ -3022,7 +3110,7 @@ def summarize_database(cell_id_list):
         if 100 not in cell_feature_table['Response_time_ms']:
             line_100ms = pd.Series([str(cell_id),'No_I_O_Adapt_computed',np.nan,np.nan,np.nan,np.nan,np.nan],index=['Cell_id','Obs','Gain','Threshold','Saturation_Frequency','Saturation_Stimulus','Adaptation_index'])
         else:
-            I_O_obs = cell_fit_table.loc[5,'I_O_obs']
+            I_O_obs = cell_fit_table.loc[100,'I_O_obs']
             Gain = cell_feature_table.loc[100,"Gain"]
             Threshold = cell_feature_table.loc[100,"Threshold"]
             Saturation_Frequency = cell_feature_table.loc[100,"Saturation_Frequency"]
@@ -3037,7 +3125,7 @@ def summarize_database(cell_id_list):
         if 250 not in cell_feature_table['Response_time_ms']:
             line_250ms = pd.Series([str(cell_id),'No_I_O_Adapt_computed',np.nan,np.nan,np.nan,np.nan,np.nan],index=['Cell_id','Obs','Gain','Threshold','Saturation_Frequency','Saturation_Stimulus','Adaptation_index'])
         else:
-            I_O_obs = cell_fit_table.loc[5,'I_O_obs']
+            I_O_obs = cell_fit_table.loc[250,'I_O_obs']
             Gain = cell_feature_table.loc[250,"Gain"]
             Threshold = cell_feature_table.loc[250,"Threshold"]
             Saturation_Frequency = cell_feature_table.loc[250,"Saturation_Frequency"]
@@ -3052,7 +3140,7 @@ def summarize_database(cell_id_list):
         if 500 not in cell_feature_table['Response_time_ms']:
             line_500ms = pd.Series([str(cell_id),'No_I_O_Adapt_computed',np.nan,np.nan,np.nan,np.nan,np.nan],index=['Cell_id','Obs','Gain','Threshold','Saturation_Frequency','Saturation_Stimulus','Adaptation_index'])
         else:
-            I_O_obs = cell_fit_table.loc[5,'I_O_obs']
+            I_O_obs = cell_fit_table.loc[500,'I_O_obs']
             Gain = cell_feature_table.loc[500,"Gain"]
             Threshold = cell_feature_table.loc[500,"Threshold"]
             Saturation_Frequency = cell_feature_table.loc[500,"Saturation_Frequency"]
@@ -3076,14 +3164,18 @@ def summarize_database(cell_id_list):
     
     return 'Done'
             
+
+
     
+
+#%%
+Margaux_Cell_id=[314642645, 314900022, 324025297, 324025371, 386049446, 395830185, 467703703, 473020156, 476451456, 476562817, 480087928, 483101699, 485468180, 485836906, 486239338, 502999078]
+for cell_id in tqdm(Margaux_Cell_id):
     
 
-
-
-
-
-
+    Full_TPC_table,full_SF_dict_table,full_SF_table,Metadata_table,sweep_info_table,Sweep_QC_table,cell_fit_table,cell_feature_table=import_h5_file(str('/Volumes/Work_Julien/Cell_Data_File/Cell_'+str(cell_id)+'_data_file.h5'),['All'])
+    stim_freq_table = fitlib.get_stim_freq_table(full_SF_table.copy(), sweep_info_table.copy(), 1)
+    stim_freq_table.to_csv(str("/Users/julienballbe/Downloads/Stim_freq_table_"+str(cell_id)+".csv"))
 
 
 
