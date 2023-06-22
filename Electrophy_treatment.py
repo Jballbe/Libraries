@@ -1520,17 +1520,18 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
 
         min_dV_dt_index=np.nanargmin(potential_derivative_trace)
         time_max_abs_dV_dt=np.array(DT_Trans_table['Time_s'])[min_dV_dt_index]
-        DT_trans_line=pd.Series([time_max_abs_dV_dt,np.array(DT_Trans_table.loc[:,'Membrane_potential_mV'])[min_dV_dt_index],'DT_trans_min_dV_dt'],
-                                index=["Time_s","Membrane_potential_mV","Feature"])
+        DT_trans_line=pd.DataFrame([time_max_abs_dV_dt,np.array(DT_Trans_table.loc[:,'Membrane_potential_mV'])[min_dV_dt_index],'DT_trans_min_dV_dt']).T
+                                
         
     elif stim_amplitude > stimulus_baseline:
 
         max_dV_dt_index=np.nanargmax(potential_derivative_trace)
         time_max_abs_dV_dt=np.array(DT_Trans_table['Time_s'])[max_dV_dt_index]
-        DT_trans_line=pd.Series([time_max_abs_dV_dt,np.array(DT_Trans_table.loc[:,'Membrane_potential_mV'])[max_dV_dt_index],'DT_trans_max_dV_dt'],
-                                index=["Time_s","Membrane_potential_mV","Feature"])
+        DT_trans_line=pd.DataFrame([time_max_abs_dV_dt,np.array(DT_Trans_table.loc[:,'Membrane_potential_mV'])[max_dV_dt_index],'DT_trans_max_dV_dt']).T
+
+    DT_trans_line.columns=["Time_s","Membrane_potential_mV","Feature"]
+    point_table=pd.concat([point_table,DT_trans_line],ignore_index=True)
     
-    point_table=point_table.append(DT_trans_line,ignore_index=True)
     
     
     
@@ -1557,8 +1558,10 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
     
     time_zero_crossing=np.array(DT_Trans_table['Time_s'])[last_zero_crossing_index]
     
-    DT_trans_line=pd.Series([time_zero_crossing,np.array(DT_Trans_table.loc[:,'Membrane_potential_mV'])[last_zero_crossing_index],'DT_trans_zero_crossing_dV_dt'],index=["Time_s","Membrane_potential_mV","Feature"])
-    point_table=point_table.append(DT_trans_line,ignore_index=True)
+    
+    DT_trans_line=pd.DataFrame([time_zero_crossing,np.array(DT_Trans_table.loc[:,'Membrane_potential_mV'])[last_zero_crossing_index],'DT_trans_zero_crossing_dV_dt']).T
+    DT_trans_line.columns=["Time_s","Membrane_potential_mV","Feature"]
+    point_table=pd.concat([point_table,DT_trans_line],ignore_index=True)
     
     
     
@@ -1637,9 +1640,10 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
                 backward_table['Legend']='Post_trans_init_value' 
             
             
-            post_trans_init_value_line=pd.Series([T_trans,Post_trans_init_value,'Post_trans_init_value'],index=["Time_s","Membrane_potential_mV","Feature"])
-            point_table=point_table.append(post_trans_init_value_line,ignore_index=True)
-           
+            
+            post_trans_init_value_line=pd.DataFrame([T_trans,Post_trans_init_value,'Post_trans_init_value']).T
+            post_trans_init_value_line.columns=["Time_s","Membrane_potential_mV","Feature"]
+            point_table=pd.concat([point_table,post_trans_init_value_line],ignore_index=True)
     
             #PreTrans_Est_table_to_fit is a table of Time_potential values between 1ms and 10ms before T_Trans,
             
@@ -1653,9 +1657,10 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
             PreTrans_Est_table=pd.DataFrame(np.column_stack((PreTrans_Est_table_to_T_trans_table.loc[:,"Time_s"],Pre_trans_Est_pred)),columns=["Time_s","Membrane_potential_mV"])
             PreTrans_Est_table['Legend']='PreTrans_Value'
             
-            Pre_trans_final_value_line=pd.Series([T_trans,Pre_Trans_Final,'PreTrans_Value'],index=["Time_s","Membrane_potential_mV","Feature"])
-            point_table=point_table.append(Pre_trans_final_value_line,ignore_index=True)
             
+            Pre_trans_final_value_line=pd.DataFrame([T_trans,Pre_Trans_Final,'PreTrans_Value']).T
+            Pre_trans_final_value_line.columns=["Time_s","Membrane_potential_mV","Feature"]
+            point_table=pd.concat([point_table,Pre_trans_final_value_line],ignore_index=True)
         
             Bridge_Error_stim_start = (Post_trans_init_value-Pre_Trans_Final)/I_step
             
@@ -1747,18 +1752,20 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
    
         max_dV_dt_index=np.nanargmax(potential_derivative_trace)
         time_max_abs_dV_dt_end=np.array(DT_Trans_table_end['Time_s'])[max_dV_dt_index]
-        DT_trans_line_end=pd.Series([time_max_abs_dV_dt_end,np.array(DT_Trans_table_end.loc[:,'Membrane_potential_mV'])[max_dV_dt_index],'DT_trans_min_dV_dt'],
-                                index=["Time_s","Membrane_potential_mV","Feature"])
+        
+        DT_trans_line_end=pd.DataFrame([time_max_abs_dV_dt_end,np.array(DT_Trans_table_end.loc[:,'Membrane_potential_mV'])[max_dV_dt_index],'DT_trans_min_dV_dt']).T
+        DT_trans_line_end.columns=["Time_s","Membrane_potential_mV","Feature"]
         
     elif stim_amplitude > stimulus_baseline:
    
         min_dV_dt_index=np.nanargmin(potential_derivative_trace)
         time_max_abs_dV_dt_end=np.array(DT_Trans_table_end['Time_s'])[min_dV_dt_index]
-        DT_trans_line_end=pd.Series([time_max_abs_dV_dt_end,np.array(DT_Trans_table_end.loc[:,'Membrane_potential_mV'])[min_dV_dt_index],'DT_trans_max_dV_dt'],
-                                index=["Time_s","Membrane_potential_mV","Feature"])
+        
+        DT_trans_line_end=pd.DataFrame([time_max_abs_dV_dt_end,np.array(DT_Trans_table_end.loc[:,'Membrane_potential_mV'])[min_dV_dt_index],'DT_trans_max_dV_dt']).T
+        DT_trans_line_end.columns=["Time_s","Membrane_potential_mV","Feature"]
+        
     
-    point_table_end=point_table_end.append(DT_trans_line_end,ignore_index=True)
-    
+    point_table_end=pd.concat([point_table_end,DT_trans_line_end],ignore_index=True)
     
     
     ##get the time of the last positive(negative) zero crossing dV/dt for a positive (negative) Istep, respectively
@@ -1784,8 +1791,10 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
     
     time_zero_crossing_end=np.array(DT_Trans_table_end['Time_s'])[last_zero_crossing_index]
     
-    DT_trans_line_end=pd.Series([time_zero_crossing_end,np.array(DT_Trans_table_end.loc[:,'Membrane_potential_mV'])[last_zero_crossing_index],'DT_trans_zero_crossing_dV_dt'],index=["Time_s","Membrane_potential_mV","Feature"])
-    point_table_end=point_table_end.append(DT_trans_line_end,ignore_index=True)
+    
+    DT_trans_line_end=pd.DataFrame([time_zero_crossing_end,np.array(DT_Trans_table_end.loc[:,'Membrane_potential_mV'])[last_zero_crossing_index],'DT_trans_zero_crossing_dV_dt']).T
+    DT_trans_line_end.columns=["Time_s","Membrane_potential_mV","Feature"]
+    point_table_end=pd.concat([point_table_end,DT_trans_line_end],ignore_index=True)
     
     DT_trans_end=max(.002,abs(T_trans_end-time_max_abs_dV_dt_end),abs(T_trans_end-time_zero_crossing_end))
     
@@ -1852,8 +1861,10 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
                 backward_table_end['Legend']='Pre_trans_init_value' 
             
         
-            pre_trans_init_value_line=pd.Series([T_trans_end,Pre_trans_init_value_end,'Pre_trans_init_value'],index=["Time_s","Membrane_potential_mV","Feature"])
-            point_table_end=point_table_end.append(pre_trans_init_value_line,ignore_index=True)
+           
+            pre_trans_init_value_line=pd.DataFrame([T_trans_end,Pre_trans_init_value_end,'Pre_trans_init_value']).T
+            pre_trans_init_value_line.columns=["Time_s","Membrane_potential_mV","Feature"]
+            point_table_end=pd.concat([point_table_end,pre_trans_init_value_line],ignore_index=True)
            
             #Corrected Version Post trans.Final
             #PostTrans_Est_table_to_fit is a table of Time_potential values between 1ms and 10ms before T_trans_end,
@@ -1874,8 +1885,10 @@ def estimate_bridge_error(original_TPC_table,stim_amplitude,stim_start_time,stim
             PostTrans_Est_table=pd.DataFrame(np.column_stack((PostTrans_Est_table_to_T_trans_table.loc[:,"Time_s"],PostTrans_Est_pred)),columns=["Time_s","Membrane_potential_mV"])
             PostTrans_Est_table['Legend']='PostTrans_Est'
             
-            Post_trans_final_value_line=pd.Series([T_trans_end,Post_Trans_Final,'PostTrans_Est'],index=["Time_s","Membrane_potential_mV","Feature"])
-            point_table_end=point_table_end.append(Post_trans_final_value_line,ignore_index=True)
+            
+            Post_trans_final_value_line=pd.DataFrame([T_trans_end,Post_Trans_Final,'PostTrans_Est']).T
+            Post_trans_final_value_line.columns=["Time_s","Membrane_potential_mV","Feature"]
+            point_table_end=pd.concat([point_table_end,Post_trans_final_value_line],ignore_index=True)
             
             
             #fit_table_end=pd.concat([backward_table, PreTrans_Est_table], axis=0)
@@ -2017,7 +2030,8 @@ def get_sweep_linear_properties(sweep,Full_TPC_table_original,cell_sweep_info_ta
         np.abs(CV_pre_stim) > 0.01 or 
         np.abs(CV_second_half) > 0.01):
         
-        sweep_line=pd.Series([sweep,np.nan,np.nan,np.nan,np.nan],index=['Sweep',"Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV','Response_Steady_State_mV'])
+        sweep_line=pd.DataFrame([sweep,np.nan,np.nan,np.nan,np.nan]).T
+        
         
     
     else:
@@ -2027,8 +2041,8 @@ def get_sweep_linear_properties(sweep,Full_TPC_table_original,cell_sweep_info_ta
                                                                          (stim_start+.200),do_plot=False)
 
         if NRMSE > 0.3:
-            sweep_line=pd.Series([sweep,np.nan,np.nan,np.nan,np.nan],index=['Sweep',"Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV','Response_Steady_State_mV'])
             
+            sweep_line=pd.DataFrame([sweep,np.nan,np.nan,np.nan,np.nan]).T
         else:
             BE=cell_sweep_info_table.loc[sweep,"Bridge_Error_GOhms"]
             
@@ -2047,9 +2061,9 @@ def get_sweep_linear_properties(sweep,Full_TPC_table_original,cell_sweep_info_ta
             R_in=((best_C-membrane_resting_potential)/I_step)-BE
             R_in*=1e3 #convert  GOhms to MOhms
             time_cst=best_tau*1e3 #convert s to ms
-            sweep_line=pd.Series([str(sweep),time_cst,R_in,membrane_resting_potential,best_C],index=['Sweep',"Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV','Response_Steady_State_mV'])
+            sweep_line=pd.DataFrame([str(sweep),time_cst,R_in,membrane_resting_potential,best_C]).T
             
-    
+    sweep_line.columns=['Sweep',"Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV','Response_Steady_State_mV']
     return sweep_line
     
     

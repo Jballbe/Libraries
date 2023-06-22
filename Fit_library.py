@@ -2014,12 +2014,14 @@ def extract_inst_freq_table(original_SF_table, original_cell_sweep_info_table,re
         for line in sweep_list:
             if isnull_table.loc[line,col] == False:
 
-                new_line=pd.Series([int(interval)+1, # Interval#
+                new_line=pd.DataFrame([int(interval)+1, # Interval#
                                     SF_table.loc[line,col], # Instantaneous frequency
                                     np.float64(cell_sweep_info_table.loc[line,'Stim_amp_pA']), # Stimulus amplitude
-                                    line],# Sweep id
-                                   index=['Spike_Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep'])
-                interval_freq_table=interval_freq_table.append(new_line,ignore_index=True)
+                                    line]).T# Sweep id
+                                   
+                new_line.columns=['Spike_Interval','Normalized_Inst_frequency','Stimulus_amp_pA','Sweep']
+                interval_freq_table=pd.concat([interval_freq_table,new_line],ignore_index=True)
+                
     
     return interval_freq_table
 
