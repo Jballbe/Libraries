@@ -34,7 +34,7 @@ import os
 from lmfit.models import LinearModel, StepModel, ExpressionModel, Model,ExponentialModel,ConstantModel,GaussianModel
 from lmfit import Parameters, Minimizer,fit_report
 
-import sys
+
 from sklearn.metrics import mean_squared_error
 
 import logging

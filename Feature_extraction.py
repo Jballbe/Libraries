@@ -17,7 +17,7 @@ import scipy
 from scipy.stats import linregress
 from scipy import optimize
 from scipy.optimize import curve_fit
-import random
+
 from tqdm import tqdm
 
 import logging
