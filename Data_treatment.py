@@ -518,7 +518,7 @@ def compute_cell_features(Full_SF_table,cell_sweep_info_table,response_duration_
     I_O_obs='--'
     if do_fit == True:
         I_O_obs = fitlib.fit_IO_relationship(Full_response_stim_freq_table,do_plot=False)[0]
-
+#test
     if do_fit == False or I_O_obs !='Hill' and I_O_obs != 'Hill-Sigmoid':
         I_O_pre_obs=str(('Cannot compute I/O,'+pruning_obs+I_O_obs))
         I_O_pre_obs.replace('--', '')
