@@ -2019,8 +2019,9 @@ def get_sweep_linear_properties(sweep,Full_TPC_table_original,cell_sweep_info_ta
                                     stim_start,
                                     (stim_start+stim_end)/2,do_plot=False)
     
-    sub_test_TPC=TPC_table[TPC_table['Time_s']<=(stim_start+stim_end)].copy()
-    sub_test_TPC=sub_test_TPC[sub_test_TPC['Time_s']>=(stim_start+stim_end)]
+    sub_test_TPC=TPC_table[TPC_table['Time_s']<=(stim_end)].copy()
+    sub_test_TPC=sub_test_TPC[sub_test_TPC['Time_s']>=((stim_start+stim_end)/2)]
+    
     CV_second_half=np.std(np.array(sub_test_TPC['Membrane_potential_mV']))/np.mean(np.array(sub_test_TPC['Membrane_potential_mV']))
 
 
@@ -2038,7 +2039,7 @@ def get_sweep_linear_properties(sweep,Full_TPC_table_original,cell_sweep_info_ta
 
         best_A,best_tau,best_C,membrane_resting_potential,NRMSE=fitlib.fit_membrane_time_cst(TPC_table,
                                                                          stim_start,
-                                                                         (stim_start+.200),do_plot=False)
+                                                                         (stim_start+.300),do_plot=False)
 
         if NRMSE > 0.3:
             

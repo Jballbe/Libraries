@@ -19,7 +19,7 @@ import h5py
 
 
 
-def get_sweep_TPC_parallel(current_sweep, cell_id, database, my_Cell_data, stim_start_time=None, stim_end_time=None):
+def get_sweep_TPC_parallel(current_sweep, cell_id, database, my_Cell_data, stim_start_time=None, stim_end_time=None,current_trace_synthetized_metadata=[],stim_start_metadata=[],stim_end_metadata=[],stim_amp_pA_metadata=[]):
     '''
     Function called in concurrent runs from "create_cell_Full_TPC_table_concurrent_runs" function. 
     Create the TPC table for a given sweep
@@ -91,8 +91,20 @@ def get_sweep_TPC_parallel(current_sweep, cell_id, database, my_Cell_data, stim_
                                               potential_trace=current_membrane_trace,
                                               current_trace=current_stim_array,
                                               filter=5.)
-        # original_TPC=original_TPC[original_TPC['Time_s']<(stim_end_time+.5)]
-        # original_TPC=original_TPC[original_TPC['Time_s']>(stim_start_time-.5)]
+        filtered_TPC=original_TPC.copy()
+        filtered_TPC['Membrane_potential_mV']=np.array(data_treat.filter_trace(filtered_TPC['Membrane_potential_mV'],
+                                                                            filtered_TPC['Time_s'],
+                                                                            filter=5.,
+                                                                            do_plot=False))
+        
+        filtered_TPC['Input_current_pA']=np.array(data_treat.filter_trace(filtered_TPC['Input_current_pA'],
+                                                                            filtered_TPC['Time_s'],
+                                                                            filter=5.,
+                                                                            do_plot=False))
+        
+        stim_start_time,stim_end_time=data_treat.estimate_trace_stim_limits(filtered_TPC,.5)
+        original_TPC=original_TPC[original_TPC['Time_s']<(stim_end_time+.5)]
+        original_TPC=original_TPC[original_TPC['Time_s']>(stim_start_time-.5)]
         original_TPC = original_TPC.apply(pd.to_numeric)
         original_TPC = original_TPC.reset_index(drop=True)
 
@@ -102,7 +114,7 @@ def get_sweep_TPC_parallel(current_sweep, cell_id, database, my_Cell_data, stim_
         
     elif database == 'NVC':
         current_time_array, current_membrane_trace, current_stim_array,stim_start_time, stim_end_time = data_treat.get_traces(
-            cell_id, current_sweep, 'NVC')
+            cell_id, current_sweep, 'NVC',current_trace_to_synthetized=current_trace_synthetized_metadata,stim_start_synthetize=stim_start_metadata ,stim_end_synthetize=stim_end_metadata,stim_amp_pA_synthetize=stim_amp_pA_metadata)
         
         original_TPC = ephys_treat.create_TPC(time_trace=current_time_array,
                                               potential_trace=current_membrane_trace,
@@ -156,7 +168,7 @@ def get_TPC_SF_table_concurrent_runs_bis(file, sweep):
 
     return new_line_TPC, new_line_SF
 
-def get_sweep_info_parallel(cell_Full_TPC_table, current_sweep, cell_id, database, stim_start_time, stim_end_time,ctc_cell_data=None):
+def get_sweep_info_parallel(cell_Full_TPC_table, current_sweep, cell_id, database, stim_start_time, stim_end_time,ctc_cell_data=None,current_trace_to_synthetized=[],stim_amp_pA_synthetize=[]):
 
     if database == 'Allen_Cell_Type_Database':
 
@@ -188,30 +200,8 @@ def get_sweep_info_parallel(cell_Full_TPC_table, current_sweep, cell_id, databas
         
         stim_baseline,stim_amp = fitlib.fit_stimulus_trace(current_TPC, stim_start_time, stim_end_time)[:2]
 
-        # Bridge_Error, membrane_time_cst, R_in, V_rest = ephys_treat.estimate_bridge_error(
-        #     current_TPC, stim_amp, stim_start_time, stim_end_time, do_plot=False)
+      
         
-        Bridge_Error= ephys_treat.estimate_bridge_error(
-            current_TPC, stim_amp, stim_start_time, stim_end_time, do_plot=False)
-
-        if np.isnan(Bridge_Error):
-            BE_extrapolated = True
-        else:
-            BE_extrapolated = False
-
-        # output_line = pd.Series([current_sweep,
-        #                          Protocol_id,
-        #                          trace_id,
-        #                          stim_amp,
-        #                          stim_start_time,
-        #                          stim_end_time,
-        #                          Bridge_Error,
-        #                          BE_extrapolated,
-        #                          membrane_time_cst,
-        #                          R_in,
-        #                          V_rest,
-        #                          sampling_rate], index=['Sweep', 'Protocol_id', 'Trace_id', 'Stim_amp_pA', 'Stim_start_s', 'Stim_end_s', 'Bridge_Error_GOhms', 'Bridge_Error_extrapolated', "Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV', 'Sampling_Rate_Hz'])
-
         
     elif database == 'Lantyer_Database':
         cell_sweep_stim_table = pd.read_pickle(
@@ -221,45 +211,23 @@ def get_sweep_info_parallel(cell_Full_TPC_table, current_sweep, cell_id, databas
         
         current_TPC=data_treat.get_filtered_TPC_table(cell_Full_TPC_table,current_sweep,do_filter=True,filter=5.,do_plot=False)
         
+        stim_start_time,stim_end_time = data_treat.estimate_trace_stim_limits(current_TPC,.500,do_plot=False)
+        
         time_trace = np.array(current_TPC['Time_s'])
         experiment,Protocol_id,trace_id = current_sweep.split("_")
-        # Protocol_id = int(str(current_sweep)[0])
-        # trace_id = int(str(current_sweep)[1:])
-
+  
         sampling_rate = np.rint(1/(time_trace[1]-time_trace[0]))
 
-        # stim_start_time,stim_end_time=get_traces(cell_id,current_sweep,'Lantyer')[-2:]
-
-        # stim_start_time,stim_end_time=fitlib.fit_stimulus_trace(current_TPC,np.nan,np.nan,do_plot=False)[2:4]
         stim_baseline,stim_amp = fitlib.fit_stimulus_trace(
             current_TPC, stim_start_time, stim_end_time)[:2]
-        # Bridge_Error, membrane_time_cst, R_in, V_rest = ephys_treat.estimate_bridge_error(
-        #     current_TPC, stim_amp, stim_start_time, stim_end_time, do_plot=False)
+       
         
-        Bridge_Error= ephys_treat.estimate_bridge_error(
-            current_TPC, stim_amp, stim_start_time, stim_end_time, do_plot=False)
-        
-        if np.isnan(Bridge_Error):
-            BE_extrapolated = True
-        else:
-            BE_extrapolated = False
-
-        # output_line = pd.Series([current_sweep,
-        #                          Protocol_id,
-        #                          trace_id,
-        #                          stim_amp,
-        #                          stim_start_time,
-        #                          stim_end_time,
-        #                          Bridge_Error,
-        #                          BE_extrapolated,
-        #                          membrane_time_cst,
-        #                          R_in,
-        #                          V_rest,
-        #                          sampling_rate], index=['Sweep', 'Protocol_id', 'Trace_id', 'Stim_amp_pA', 'Stim_start_s', 'Stim_end_s', 'Bridge_Error_GOhms', 'Bridge_Error_extrapolated', "Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV', 'Sampling_Rate_Hz'])
-
+       
         
     elif database == 'NVC':
         
+        stim_start_list=stim_start_time
+        stim_end_list=stim_end_time
         cell_file_directory = pd.read_csv('/Volumes/Work_Julien/NVC_database/Cell_files_id_directories.csv',index_col=None)
         current_table_CC = cell_file_directory[cell_file_directory['Cell_id']==cell_id ]
         current_table_CC = current_table_CC[current_table_CC['CC/DC']=='CC']
@@ -295,49 +263,42 @@ def get_sweep_info_parallel(cell_Full_TPC_table, current_sweep, cell_id, databas
                   "Bridge_MOhms":header[8],
                   "Cap_compensation":header[9]}
         
-        stim_start_time=metadata["I_delay_ms"]*1e-3
-        stim_end_time=stim_start_time+metadata["I_pulse_width_ms"]*1e-3
         sampling_rate=metadata['Sample_rate_Hz']
-        
+        if current_trace_to_synthetized[(int(Protocol_id)-1)][(int(trace_id)-1)]==True:
+            
+            
+            stim_start_time=stim_start_list[(int(Protocol_id)-1)][(int(trace_id)-1)]
+            
+            
+            stim_end_time=stim_end_list[(int(Protocol_id)-1)][(int(trace_id)-1)]
+            
+            
+            
+        else:
+            stim_start_time=metadata["I_delay_ms"]*1e-3
+            stim_end_time=stim_start_time+metadata["I_pulse_width_ms"]*1e-3
+
+            
         current_TPC=data_treat.get_filtered_TPC_table(cell_Full_TPC_table,current_sweep,do_filter=True,filter=5.,do_plot=False)
         
         stim_baseline,stim_amp = fitlib.fit_stimulus_trace(
-            current_TPC, stim_start_time, stim_end_time)[:2]
-        
-        # if np.isnan(metadata['I_start_pulse_pA']) or np.isnan(metadata['I_increment_pA']):
-        #     stim_amp=fitlib.fit_stimulus_trace(
-        #         current_TPC, stim_start_time, stim_end_time)[1]
-        
-        # else:
-        #     stim_amp = metadata['I_start_pulse_pA']+(trace_id-1)*metadata['I_increment_pA']
+            current_TPC, stim_start_time, stim_end_time,do_plot=False)[:2]
+    
         
         
-        
-        # Bridge_Error, membrane_time_cst, R_in, V_rest = ephys_treat.estimate_bridge_error(
-        #     current_TPC, stim_amp, stim_start_time, stim_end_time, do_plot=False)
-        
+    if np.abs((stim_baseline-stim_amp))>=20.:
         Bridge_Error= ephys_treat.estimate_bridge_error(
             current_TPC, stim_amp, stim_start_time, stim_end_time, do_plot=False)
-        
-        if np.isnan(Bridge_Error):
-            BE_extrapolated = True
-        else:
-            BE_extrapolated = False
-        
-        # output_line = pd.Series([current_sweep,
-        #                          Protocol_id,
-        #                          trace_id,
-        #                          stim_amp,
-        #                          stim_start_time,
-        #                          stim_end_time,
-        #                          Bridge_Error,
-        #                          BE_extrapolated,
-        #                          membrane_time_cst,
-        #                          R_in,
-        #                          V_rest,
-        #                          sampling_rate], index=['Sweep', 'Protocol_id', 'Trace_id', 'Stim_amp_pA', 'Stim_start_s', 'Stim_end_s', 'Bridge_Error_GOhms', 'Bridge_Error_extrapolated', "Time_constant_ms", 'Input_Resistance_MOhm', 'Membrane_resting_potential_mV', 'Sampling_Rate_Hz'])
-
-        
+    else:
+        Bridge_Error=np.nan
+    
+    if np.isnan(Bridge_Error):
+        BE_extrapolated = True
+    else:
+        BE_extrapolated = False
+    
+    
+    
     output_line = pd.DataFrame([str(current_sweep),
                              Protocol_id,
                              trace_id,

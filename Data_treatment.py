@@ -97,11 +97,11 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
     today = today.strftime("%Y_%m_%d")
     original_files = [f for f in glob.glob(str(saving_folder_path+'*.h5*'))]
     population_class_table = pd.read_csv(
-        "/Users/julienballbe/My_Work/Data_Analysis/Full_population_files/Full_Population_Class.csv")
+        "/Users/julienballbe/My_Work/Data_Analysis/Full_population_files/Full_Population_Class.csv",index_col=None)
     population_class_table = population_class_table.copy()
-    Full_database_table = pd.read_csv(
-        '/Users/julienballbe/My_Work/Data_Analysis/Full_population_files/Full_Database_Cell_id.csv')
-    Full_database_table = Full_database_table.copy()
+    # Full_database_table = pd.read_csv(
+    #     '/Users/julienballbe/My_Work/Data_Analysis/Full_population_files/Full_Database_Cell_id.csv')
+    # Full_database_table = Full_database_table.copy()
     problem_cell=[]
 
     for cell_id in tqdm(cell_id_list):
@@ -123,10 +123,10 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
         try:
             if cell_file_path in original_files and 'All' in selection and overwrite == True:  # rewrite the whole file
 
-                cell_database = Full_database_table[Full_database_table['Cell_id'] == str(
+                cell_database = population_class_table[population_class_table['Cell_id'] == str(
                     cell_id)]['Database'].values[0]
 
-                metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table, cell_sweep_QC,cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
+                Metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table, cell_sweep_QC,cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
                                                                                                                                                                                       cell_database,
                                                                                                                                                                                       population_class_table,
                                                                                                                                                                                       '-',
@@ -147,7 +147,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                    cell_sweep_QC,
                                    cell_fit_table,
                                    cell_feature_table,
-                                   metadata_table,
+                                   Metadata_table,
                                    selection=selection,
                                    overwrite=overwrite)
 
@@ -168,7 +168,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                           'Lastly_modified_Cell_Fit'] = str(today)
 
             elif cell_file_path in original_files and 'All' not in selection and overwrite == True:  # rewrite only part of the file
-                cell_database = Full_database_table[Full_database_table['Cell_id'] == str(
+                cell_database = population_class_table[population_class_table['Cell_id'] == str(
                     cell_id)]['Database'].values[0]
                 import_dict={'TPC_SF':['TPC_SF','Sweep_info'],
                              'Sweep_info':['TPC_SF'],
@@ -191,7 +191,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                 if Full_TPC_table.empty or Full_SF_dict_table.empty or Full_SF_table.empty:
                     raise Exception('TPC_table_or_SF_tables_missing')
 
-                metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table,cell_sweep_QC, cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
+                Metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table,cell_sweep_QC, cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
                                                                                                                                                                                       cell_database,
                                                                                                                                                                                       population_class_table,
                                                                                                                                                                                       Metadata_table,
@@ -211,7 +211,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                    cell_sweep_QC,
                                    cell_fit_table,
                                    cell_feature_table,
-                                   metadata_table,
+                                   Metadata_table,
                                    selection=selection,
                                    overwrite=overwrite)
                 Cell_file_information.loc[cell_index, 'Note'] = '--'
@@ -242,10 +242,10 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
 
             else:  # create file
 
-                cell_database = Full_database_table[Full_database_table['Cell_id'] == str(
+                cell_database = population_class_table[population_class_table['Cell_id'] == str(
                     cell_id)]['Database'].values[0]
 
-                metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table,cell_sweep_QC, cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
+                Metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table,cell_sweep_QC, cell_fit_table, cell_feature_table = process_cell_data(str(cell_id),
                                                                                                                                                                                       cell_database,
                                                                                                                                                                                       population_class_table,
                                                                                                                                                                                       '-',
@@ -265,7 +265,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                    cell_sweep_QC,
                                    cell_fit_table,
                                    cell_feature_table,
-                                   metadata_table,
+                                   Metadata_table,
                                    selection=selection,
                                    overwrite=overwrite)
                 Cell_file_information.loc[cell_index, 'Note'] = '--'
@@ -289,6 +289,8 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                               'Lastly_modified_Cell_Fit'] = str(today)
 
         except Exception as e:
+        #except ValueError as e:
+        
             problem_cell.append(str(cell_id))
             print(str('Problem_with_cell:'+str(cell_id)+str(e)))
             Cell_file_information.loc[cell_index, 'Note'] = str(type(e))
@@ -304,7 +306,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
                                                               'Lastly_modified_Cell_Feature',
                                                               'Lastly_modified_Cell_Fit']]
         Cell_file_information.to_csv(
-            "/Volumes/Work_Julien/Cell_Data_File/Cell_file_information.csv")
+            "/Volumes/Work_Julien/Cell_Data_File/Cell_file_information.csv",index=False)
     print('Finished')
     return problem_cell
 
@@ -312,7 +314,7 @@ def create_cell_file(cell_id_list, saving_folder_path="/Volumes/Work_Julien/Cell
 def process_cell_data(cell_id,
                       database,
                       population_class_file,
-                      original_metadata_table='-',
+                      original_Metadata_table='-',
                       original_Full_TPC_table = '-',
                       original_Full_SF_table = '-',
                       original_Full_SF_dict ='-',
@@ -332,7 +334,7 @@ def process_cell_data(cell_id,
         The database from which the cell_id is coming.
     population_class_file : pd.Dataframe
         Table gathering for Every cell different information used for Metadata table (Area, layer...) .
-    original_metadata_table : pd.DataFrame
+    original_Metadata_table : pd.DataFrame
 
     original_Full_TPC_table : pd.DataFrame
         DataFrame, two columns. For each row, first column ('Sweep')contains Sweep_id, and second column ('TPC') contains a TPC pd.DataFrame (Contains Time, Current,Potential, First Time deriv of Potential, and Second Time deriv of Potential)
@@ -353,7 +355,7 @@ def process_cell_data(cell_id,
 
     Returns
     -------
-    metadata_table : pd.DataFrame
+    Metadata_table : pd.DataFrame
         DESCRIPTION.
     Full_TPC_table : pd.DataFrame
         DataFrame, two columns. For each row, first column ('Sweep')contains Sweep_id, and second column ('TPC') contains a TPC pd.DataFrame (Contains Time, Current,Potential, First Time deriv of Potential, and Second Time deriv of Potential)
@@ -396,7 +398,7 @@ def process_cell_data(cell_id,
 
         if 'Sweep_QC' in selection or original_cell_sweep_QC_table == '-':
 
-            cell_Sweep_QC_table=create_cell_sweep_QC_table(cell_sweep_info_table)
+            cell_Sweep_QC_table=create_cell_sweep_QC_table(cell_sweep_info_table,cell_id, database)
         else:
 
             cell_Sweep_QC_table=original_cell_sweep_QC_table.copy()
@@ -439,15 +441,19 @@ def process_cell_data(cell_id,
             cell_Sweep_QC_table=original_cell_sweep_QC_table.copy()
 
     if 'Metadata' in selection:
-        metadata_table = create_metadata_dict(
+        Metadata_table = create_metadata_dict(
             cell_id, database, population_class_file, cell_sweep_info_table.copy())
     else:
-        metadata_table = original_metadata_table
+        Metadata_table = original_Metadata_table
 
     if 'Cell_Feature_Fit' in selection:
-        time_response_list = [.005, .010, .025, .050, .100, .250, .500]
+        
+        response_duration_dictionnary={
+            'Time_based':[.005, .010, .025, .050, .100, .250, .500],
+            'Index_based':[1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+            'Interval_based':[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]}
 
-        cell_feature_table,cell_fit_table=compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_response_list)
+        cell_feature_table,cell_fit_table=compute_cell_features(Full_SF_table,cell_sweep_info_table,response_duration_dictionnary,cell_Sweep_QC_table)
 
         if cell_fit_table.shape[0] == 0:
             cell_fit_table.loc[0, :] = np.nan
@@ -462,9 +468,9 @@ def process_cell_data(cell_id,
         cell_feature_table = original_cell_feature_table
         
 
-    return metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table, cell_Sweep_QC_table,cell_fit_table, cell_feature_table
+    return Metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table, cell_Sweep_QC_table,cell_fit_table, cell_feature_table
 
-def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_response_list):
+def compute_cell_features(Full_SF_table,cell_sweep_info_table,response_duration_dictionnary,sweep_QC_table):
     '''
     Compute cell I/O features as well as adaptation, for a given set of time response duration.
     If either I/O feature or adaptation can't be computed, then the function return empty dataframes,
@@ -492,21 +498,20 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
 
     '''
     
-    fit_columns = ['Response_time_ms', 'I_O_obs', 'I_O_QNRMSE', 'Hill_amplitude',
+    fit_columns = ['Response_type','Output_Duration', 'I_O_obs', 'I_O_QNRMSE', 'Hill_amplitude',
                    'Hill_coef', 'Hill_Half_cst','Hill_x0','Sigmoid_x0','Sigmoid_sigma', 'Adaptation_obs', 'Adaptation_RMSE', 'A', 'B', 'C']
     cell_fit_table = pd.DataFrame(columns=fit_columns)
 
-    feature_columns = ['Response_time_ms', 'Gain',
-                       'Threshold', 'Saturation_Frequency',"Saturation_Stimulus", 'Adaptation_index']
+    feature_columns = ['Response_type','Output_Duration', 'Gain','Threshold', 'Saturation_Frequency',"Saturation_Stimulus", 'Adaptation_index']
     cell_feature_table = pd.DataFrame(columns=feature_columns)
 
     
-    
-    
     Full_response_stim_freq_table=fitlib.get_stim_freq_table(
-        Full_SF_table.copy(), cell_sweep_info_table.copy(), .5)
+        Full_SF_table.copy(), cell_sweep_info_table.copy(),sweep_QC_table.copy(),.5,'Time_based')
     
-    #max_freq_step_norm = stim_freq_max_freq_step_norm(Full_response_stim_freq_table,do_plot=False)[0]
+   
+   
+
     
     I_O_pre_obs='--'
     pruning_obs, do_fit = data_pruning_I_O(Full_response_stim_freq_table,cell_sweep_info_table)
@@ -519,11 +524,11 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
         I_O_pre_obs.replace('--', '')
     
 
-    adapt_obs, adapt_do_fit = data_pruning_adaptation(Full_SF_table, cell_sweep_info_table.copy(), .5)
+    adapt_obs, adapt_do_fit = data_pruning_adaptation(Full_SF_table, cell_sweep_info_table.copy(),sweep_QC_table.copy(), .5)
     Adaptation_obs="--"
     Adapt_obs_reject='--'
     if adapt_do_fit == True:
-        inst_freq_table = fitlib.extract_inst_freq_table(Full_SF_table, cell_sweep_info_table.copy(), .5)
+        inst_freq_table = fitlib.extract_inst_freq_table(Full_SF_table, cell_sweep_info_table.copy(),sweep_QC_table.copy(), .5)
         Adaptation_obs, A, Adaptation_index, C, Adaptation_RMSE = fitlib.fit_adaptation_curve(inst_freq_table, do_plot=False)
     
     if adapt_do_fit == False or Adaptation_obs!='--':
@@ -535,7 +540,8 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
     if I_O_pre_obs !='--' or Adapt_obs_reject != '--':
         
         #return cell_feature_table,cell_fit_table,Full_Adaptation_fit_table
-        new_fit_table_line = pd.DataFrame([0,
+        new_fit_table_line = pd.DataFrame(['Time_based',
+                                           0.5,
                                         I_O_pre_obs,
                                         np.nan,
                                         np.nan,
@@ -552,7 +558,8 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
         new_fit_table_line.columns=fit_columns
         cell_fit_table=pd.concat([cell_fit_table,new_fit_table_line],ignore_index=True)
         
-        cell_fit_table_convert_dict = {'Response_time_ms': float,
+        cell_fit_table_convert_dict = {'Response_type': str,
+                                       'Output_Duration':float,
                         'I_O_obs':str,
                         'I_O_QNRMSE':float,
                         'Hill_amplitude':float,
@@ -568,8 +575,9 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
                         'C':float}
         cell_fit_table=cell_fit_table.astype(cell_fit_table_convert_dict)
 
-        new_feature_table_line = pd.DataFrame([0,
-                                            np.nan,
+        new_feature_table_line = pd.DataFrame(['Time_based',
+                                               0.5,
+                                               np.nan,
                                             np.nan,
                                             np.nan,
                                             np.nan,
@@ -577,7 +585,8 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
         new_feature_table_line.columns= feature_columns
         cell_feature_table=pd.concat([cell_feature_table,new_feature_table_line],ignore_index=True)
         
-        cell_feature_table_convert_dict={'Response_time_ms': float,
+        cell_feature_table_convert_dict={'Response_type': str,
+                                       'Output_Duration':float,
                         'Gain':float,
                         'Threshold':float,
                         'Saturation_Frequency':float,
@@ -590,75 +599,100 @@ def compute_cell_features(cell_id,Full_SF_table,cell_sweep_info_table,time_respo
         return cell_feature_table,cell_fit_table
         
         
-    ## If I_O criteria passed and adaptation was succesFully computed, compute I/O feature for different time responses
+    ## If I_O criteria passed and adaptation was successfully computed, compute I/O feature for different time responses
 
-    for response_time in time_response_list:
+    for response_type in response_duration_dictionnary.keys():
+        output_duration_list=response_duration_dictionnary[response_type]
 
-        stim_freq_table = fitlib.get_stim_freq_table(
-            Full_SF_table.copy(), cell_sweep_info_table.copy(), response_time)
-
-        pruning_obs, do_fit = data_pruning_I_O(stim_freq_table,cell_sweep_info_table)
-
-        if do_fit == True:
-            I_O_obs, Hill_Amplitude, Hill_coef, Hill_Half_cst,Hill_x0, sigmoid_x0,sigmoid_sigma,I_O_QNRMSE, x_shift, Gain, Threshold, Saturation_freq,Saturation_stim = fitlib.fit_IO_relationship(
-                stim_freq_table, do_plot=False)
-
-        else:
-            I_O_obs = pruning_obs
-            empty_array = np.empty(12)
-            empty_array[:] = np.nan
-            Hill_Amplitude, Hill_coef, Hill_Half_cst,Hill_x0, sigmoid_x0,sigmoid_sigma,I_O_QNRMSE, x_shift, Gain, Threshold, Saturation_freq,Saturation_stim = empty_array
-
-
-        if response_time == max(time_response_list):
+        
+        for output_duration in output_duration_list:
+    
+            stim_freq_table = fitlib.get_stim_freq_table(
+                Full_SF_table.copy(), cell_sweep_info_table.copy(),sweep_QC_table.copy(), output_duration,response_type)
+    
+            pruning_obs, do_fit = data_pruning_I_O(stim_freq_table,cell_sweep_info_table)
             
-            
-            
-            inst_freq_table = fitlib.extract_inst_freq_table(Full_SF_table, cell_sweep_info_table.copy(), response_time)
-            Adaptation_obs, A, Adaptation_index, C, Adaptation_RMSE = fitlib.fit_adaptation_curve(inst_freq_table, do_plot=False)
-            
-        else:
-            empty_array = np.empty(4)
-            empty_array[:] = np.nan
-            Adaptation_obs = '--'
-            Adaptation_RMSE, A, Adaptation_index, C = empty_array
+            if do_fit == True:
+                I_O_obs, Hill_Amplitude, Hill_coef, Hill_Half_cst,Hill_x0, sigmoid_x0,sigmoid_sigma,I_O_QNRMSE, x_shift, Gain, Threshold, Saturation_freq,Saturation_stim = fitlib.fit_IO_relationship(
+                    stim_freq_table, do_plot=False)
+    
+            else:
+                I_O_obs = pruning_obs
+                empty_array = np.empty(12)
+                empty_array[:] = np.nan
+                Hill_Amplitude, Hill_coef, Hill_Half_cst,Hill_x0, sigmoid_x0,sigmoid_sigma,I_O_QNRMSE, x_shift, Gain, Threshold, Saturation_freq,Saturation_stim = empty_array
+    
+    
+            if output_duration == .5 and response_type=='Time_based':
+                
+                
+                
+                inst_freq_table = fitlib.extract_inst_freq_table(Full_SF_table, cell_sweep_info_table.copy(),sweep_QC_table.copy(), output_duration)
+                Adaptation_obs, A, Adaptation_index, C, Adaptation_RMSE = fitlib.fit_adaptation_curve(inst_freq_table, do_plot=False)
+                
+            else:
+                empty_array = np.empty(4)
+                empty_array[:] = np.nan
+                Adaptation_obs = '--'
+                Adaptation_RMSE, A, Adaptation_index, C = empty_array
+    
+            new_fit_table_line = pd.DataFrame([response_type,
+                                               output_duration,
+                                            I_O_obs,
+                                            I_O_QNRMSE,
+                                            Hill_Amplitude,
+                                            Hill_coef,
+                                            Hill_Half_cst,
+                                            Hill_x0,
+                                            sigmoid_x0,
+                                            sigmoid_sigma,
+                                            Adaptation_obs,
+                                            Adaptation_RMSE,
+                                            A,
+                                            Adaptation_index,
+                                            C]).T
+            new_fit_table_line.columns=fit_columns
+            cell_fit_table=pd.concat([cell_fit_table,new_fit_table_line],ignore_index=True)
+    
+    
+            new_feature_table_line = pd.DataFrame([response_type,
+                                               output_duration,
+                                                Gain,
+                                                Threshold,
+                                                Saturation_freq,
+                                                Saturation_stim,
+                                                Adaptation_index]).T
+            new_feature_table_line.columns=feature_columns
+            cell_feature_table=pd.concat([cell_feature_table,new_feature_table_line],ignore_index=True)
 
-        new_fit_table_line = pd.Series([response_time*1e3,
-                                        I_O_obs,
-                                        I_O_QNRMSE,
-                                        Hill_Amplitude,
-                                        Hill_coef,
-                                        Hill_Half_cst,
-                                        Hill_x0,
-                                        sigmoid_x0,
-                                        sigmoid_sigma,
-                                        Adaptation_obs,
-                                        Adaptation_RMSE,
-                                        A,
-                                        Adaptation_index,
-                                        C], index=fit_columns)
+        
 
-        cell_fit_table = cell_fit_table.append(
-            new_fit_table_line, ignore_index=True)
+    cell_fit_table=cell_fit_table.astype({'Response_type': 'str',
+                                          'Output_Duration':'float',
+                                          'I_O_QNRMSE':'float',
+                                          'Hill_amplitude':'float',
+                                          'Hill_coef':'float',
+                                          'Hill_Half_cst':'float',
+                                          'Hill_x0':'float',
+                                          'Sigmoid_x0':'float',
+                                          'Sigmoid_sigma':'float',
+                                          'Adaptation_RMSE':'float',
+                                          'A':'float',
+                                          'B':'float',
+                                          'C':'float'})
+    
+    cell_feature_table_convert_dict={'Response_type': str,
+                                   'Output_Duration':float,
+                    'Gain':float,
+                    'Threshold':float,
+                    'Saturation_Frequency':float,
+                    'Saturation_Stimulus':float,
+                    'Adaptation_index':float}
+    cell_feature_table=cell_feature_table.astype(cell_feature_table_convert_dict)
 
-        new_feature_table_line = pd.Series([response_time*1e3,
-                                            Gain,
-                                            Threshold,
-                                            Saturation_freq,
-                                            Saturation_stim,
-                                            Adaptation_index], index=feature_columns)
-
-        cell_feature_table = cell_feature_table.append(
-            new_feature_table_line, ignore_index=True)
-
-   
-    cell_fit_table.index = cell_fit_table.loc[:, "Response_time_ms"]
-    cell_feature_table.index = cell_feature_table.loc[:,
-                                                      'Response_time_ms']
-    cell_feature_table.index = cell_feature_table.index.astype(int)
+    
     
     return cell_feature_table,cell_fit_table
-    
 
 def write_cell_file_h5(cell_file_path,
                        original_Full_TPC_table,
@@ -667,7 +701,7 @@ def write_cell_file_h5(cell_file_path,
                        original_cell_sweep_QC,
                        original_cell_fit_table,
                        original_cell_feature_table,
-                       original_metadata_table,
+                       original_Metadata_table,
                        selection=['All'],
                        overwrite=False):
     '''
@@ -689,7 +723,7 @@ def write_cell_file_h5(cell_file_path,
         Contains computed feature at different time response duration (Gain, Threshold...)
     original_Full_Adaptation_fit_table : pd.DataFrame
         Contains sweep-related adaptation  parameters (used for plotting)
-    original_metadata_table : pd.DataFrame
+    original_Metadata_table : pd.DataFrame
         Contains cell metadata.
     selection : List, optional
         List of cell item to write/modify. The default is ['All'].
@@ -710,16 +744,16 @@ def write_cell_file_h5(cell_file_path,
         if 'Metadata_table' in f.keys() and overwrite == True:
             del f["Metadata_table"]
             Metadata_group = f.create_group('Metadata_table')
-            for elt in original_metadata_table.keys():
+            for elt in original_Metadata_table.keys():
 
                 Metadata_group.create_dataset(
-                    str(elt), data=original_metadata_table[elt])
+                    str(elt), data=original_Metadata_table[elt])
         elif 'Metadata_table' not in f.keys():
             Metadata_group = f.create_group('Metadata_table')
-            for elt in original_metadata_table.keys():
+            for elt in original_Metadata_table.keys():
 
                 Metadata_group.create_dataset(
-                    str(elt), data=original_metadata_table[elt])
+                    str(elt), data=original_Metadata_table[elt])
 
     # Store TPC Tables and SF dict
     if 'TPC_SF' in selection:
@@ -789,10 +823,12 @@ def write_cell_file_h5(cell_file_path,
             
             sweep_list = np.array(cell_sweep_info_table['Sweep'])
     
+    # Store Sweep QC table
     if 'Sweep_QC' in selection:
         cell_sweep_QC = original_cell_sweep_QC.copy()
         convert_dict = {'Sweep': str,
-                        'Passed_QC':bool
+                        'Passed_QC' : bool,
+                        "Database_QC":bool
                         }
 
         cell_sweep_QC = cell_sweep_QC.astype(convert_dict)
@@ -821,20 +857,13 @@ def write_cell_file_h5(cell_file_path,
         if 'Cell_Feature' in f.keys() and overwrite == True:
             del f["Cell_Feature"]
 
-            del f['Cell_Fit']
-
-
             cell_feature_group = f.create_group('Cell_Feature')
+            for elt in np.array(cell_feature_table.columns):
+                cell_feature_group.create_dataset(
+                    elt, data=np.array(cell_feature_table[elt]))
             
-            cell_feature_group.create_dataset(
-                'Cell_Feature_Table', data=cell_feature_table)
-            
-            cell_feature_group.create_dataset(
-                'Cell_Feature_Table_colnames', data=np.array(cell_feature_table.columns))
-
+            del f['Cell_Fit']
             cell_fit_group = f.create_group('Cell_Fit')
-            
-
             for elt in np.array(cell_fit_table.columns):
                 cell_fit_group.create_dataset(
                     elt, data=np.array(cell_fit_table[elt]))
@@ -844,11 +873,9 @@ def write_cell_file_h5(cell_file_path,
         elif 'Cell_Feature' not in f.keys():
             
             cell_feature_group = f.create_group('Cell_Feature')
-            cell_feature_group.create_dataset(
-                'Cell_Feature_Table', data=cell_feature_table)
-            cell_feature_group.create_dataset(
-                'Cell_Feature_Table_colnames', data=np.array(cell_feature_table.columns))
-
+            for elt in np.array(cell_feature_table.columns):
+                cell_feature_group.create_dataset(
+                    elt, data=np.array(cell_feature_table[elt]))
            
 
             # Store Cell fit table
@@ -856,6 +883,7 @@ def write_cell_file_h5(cell_file_path,
             
 
             for elt in np.array(cell_fit_table.columns):
+                
                 cell_fit_group.create_dataset(
                     elt, data=np.array(cell_fit_table[elt]))
 
@@ -900,7 +928,7 @@ def create_cell_Full_TPC_table_concurrent_runs(cell_id, database):
         Full_TPC_table.index = Full_TPC_table.loc[:, 'Sweep']
 
 
-    elif database == 'Lantyer_Database' or database == 'Lantyer_Database':
+    elif database == 'Lantyer_Database' :
 
         # cell_sweep_stim_table = pd.read_pickle(
         #     '/Users/julienballbe/My_Work/Lantyer_Data/Cell_Sweep_Stim.pkl')
@@ -910,49 +938,42 @@ def create_cell_Full_TPC_table_concurrent_runs(cell_id, database):
 
         sweep_list = np.array(cell_sweep_stim_table.iloc[0, -1])
 
-        stim_start_time, stim_end_time = estimate_cell_stim_time_limit_concurrent_runs(
-            cell_id, database)
-
+        
 
 
         with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
             TPC_lines_dict = {executor.submit(
-                parafunc.get_sweep_TPC_parallel, x, cell_id, database, '--', stim_start_time, stim_end_time): x for x in sweep_list}
+                parafunc.get_sweep_TPC_parallel, x, cell_id, database, '--'): x for x in sweep_list}
             for f in concurrent.futures.as_completed(TPC_lines_dict):
                 Full_TPC_table=pd.concat([Full_TPC_table,f.result()],axis=0,ignore_index=True)
 
         Full_TPC_table.index = Full_TPC_table.loc[:, 'Sweep']
-        stim_start_time, stim_end_time = estimate_cell_stim_onset(
-            Full_TPC_table, do_plot=False)  # estimate cell stim start/stim_end to shorten TPC
-
-        second_Full_TPC_table = pd.DataFrame(columns=['Sweep', 'TPC'])
-        for sweep in sweep_list:
-            current_TPC = Full_TPC_table.loc[sweep, 'TPC'].copy()
-            current_TPC = current_TPC[current_TPC['Time_s'] < (
-                stim_end_time+.5)]
-            current_TPC = current_TPC[current_TPC['Time_s'] > (
-                stim_start_time-.5)]
-            
-            current_TPC = current_TPC.apply(pd.to_numeric)
-            current_TPC = current_TPC.reset_index(drop=True)
-
-            current_TPC.index = current_TPC.index.astype(int)
-            new_line = pd.Series([sweep, current_TPC], index=['Sweep', 'TPC'])
-            second_Full_TPC_table = second_Full_TPC_table.append(
-                new_line, ignore_index=True)
-        Full_TPC_table = second_Full_TPC_table
-        Full_TPC_table.index = Full_TPC_table.loc[:, 'Sweep']
+       
+       
         
     elif database == 'NVC':
         
         cell_sweep_table=pd.read_pickle('/Volumes/Work_Julien/NVC_database/NVC_CC_Cell_sweep_table_V2.pkl')
+        NVC_database_trace_metadata=pd.read_pickle("/Volumes/Work_Julien/NVC_database/NVC_CC_sweep_Metadata_table.pkl")
         cell_sweep_table = cell_sweep_table[cell_sweep_table['Cell_id'] == cell_id]
-
+        trace_metadata_sub_table=NVC_database_trace_metadata.loc[(NVC_database_trace_metadata['Cell_id'] == cell_id)&(NVC_database_trace_metadata['CC/DC'] == 'CC'),]
+        trace_metadata_sub_table=trace_metadata_sub_table.sort_values(by=["Protocol_number"])
+        current_trace_synthetized_metadata=[]
+        stim_start_metadata=[]
+        stim_end_metadata=[]
+        stim_amp_pA_metadata=[]
+        for protocol_number in np.array(trace_metadata_sub_table['Protocol_number']):
+            current_line=trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),:]
+            current_index=current_line.index.values[0]
+            current_trace_synthetized_metadata.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Current_trace_synthetized'][current_index].tolist()))
+            stim_start_metadata.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Stim_start_s'][current_index].tolist()))
+            stim_end_metadata.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Stim_end_s'][current_index].tolist()))
+            stim_amp_pA_metadata.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Stim_amp_pA'][current_index].tolist()))
         sweep_list = np.array(cell_sweep_table.iloc[0, -1])
-        
+
         with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
             TPC_lines_dict = {executor.submit(
-                parafunc.get_sweep_TPC_parallel, x, cell_id, database, '--'): x for x in sweep_list}
+                parafunc.get_sweep_TPC_parallel, x, cell_id, database, '--',None, None, current_trace_synthetized_metadata,stim_start_metadata,stim_end_metadata, stim_amp_pA_metadata ): x for x in sweep_list}
             for f in concurrent.futures.as_completed(TPC_lines_dict):
                 Full_TPC_table=pd.concat([Full_TPC_table,f.result()],axis=0,ignore_index=True)
 
@@ -965,7 +986,7 @@ def create_cell_Full_TPC_table_concurrent_runs(cell_id, database):
 
 
 
-def get_traces(cell_id, sweep_id, database):
+def get_traces(cell_id, sweep_id, database,current_trace_to_synthetized=[],stim_start_synthetize=[],stim_end_synthetize=[],stim_amp_pA_synthetize=[]):
     '''
     Function to get sweep raw traces for a cell
 
@@ -1040,8 +1061,7 @@ def get_traces(cell_id, sweep_id, database):
         current_trace = np.array(current_stim_trace.loc[:, 'Input_current_pA'])
 
         
-        # stim_start_time=best_stim_start
-        # stim_end_time=best_stim_start+.5
+     
         stim_start_time = np.nan
         stim_end_time = np.nan
         
@@ -1055,14 +1075,9 @@ def get_traces(cell_id, sweep_id, database):
             by=['Time'])
         current_table_CC=current_table_CC.reset_index(drop=True)
         
-        # current_Protocol = int(str(sweep_id)[0])
-        # current_sweep = int(str(sweep_id)[1:])
         experiment,current_Protocol,current_sweep = sweep_id.split("_")
         current_Protocol = int(current_Protocol)
         current_sweep = int(current_sweep)
-        # current_experiment = int(str(sweep_id)[0])
-        # current_Protocol = int(str(sweep_id)[1:3])
-        # current_sweep = int(str(sweep_id)[3:])
         
         current_time_file=current_table_CC.loc[int(current_Protocol)-1,'Time']
         
@@ -1097,13 +1112,31 @@ def get_traces(cell_id, sweep_id, database):
         traces=raw_traces[1:]
         potential_current_sep_index=int(len(traces)/2)
         potential_trace=traces[:potential_current_sep_index]
-        current_trace=traces[potential_current_sep_index:]
         
-        sweep_duration=len(current_trace)/metadata["Sample_rate_Hz"]
+        sweep_duration=len(potential_trace)/metadata["Sample_rate_Hz"]
         time_trace=np.arange(0,sweep_duration,(1/metadata["Sample_rate_Hz"]))
-        
-        stim_start_time=metadata["I_delay_ms"]*1e-3
-        stim_end_time=stim_start_time+metadata["I_pulse_width_ms"]*1e-3
+
+        if current_trace_to_synthetized[int((int(current_Protocol)-1))][int((int(current_sweep)-1))]==True:
+            current_trace=np.zeros(len(potential_trace))
+            
+            stim_start_time=stim_start_synthetize[(int(current_Protocol)-1)][(int(current_sweep)-1)]
+            stim_start_index=find_time_index(
+                time_trace, stim_start_time)
+            
+            stim_end_time=stim_end_synthetize[(int(current_Protocol)-1)][(int(current_sweep)-1)]
+            stim_end_index = find_time_index(
+                time_trace, stim_end_time)
+            
+            stim_amp_pA = stim_amp_pA_synthetize[(int(current_Protocol)-1)][(int(current_sweep)-1)]
+            current_trace[stim_start_index:stim_end_index]+=stim_amp_pA
+        else:
+            current_trace=traces[potential_current_sep_index:]
+            
+            sweep_duration=len(current_trace)/metadata["Sample_rate_Hz"]
+            time_trace=np.arange(0,sweep_duration,(1/metadata["Sample_rate_Hz"]))
+            
+            stim_start_time=metadata["I_delay_ms"]*1e-3
+            stim_end_time=stim_start_time+metadata["I_pulse_width_ms"]*1e-3
          
     return time_trace, potential_trace, current_trace, stim_start_time, stim_end_time
 
@@ -1147,25 +1180,46 @@ def create_cell_sweep_info_table_concurrent_runs(cell_id, database, cell_Full_TP
     sweep_list = np.array(cell_Full_TPC_table['Sweep'], dtype=str)
 
     if database == 'Lantyer_Database':
-        stim_start_time, stim_end_time = estimate_cell_stim_onset(
-            cell_Full_TPC_table, do_plot=False)
+   
+        stim_start_time = np.nan
+        stim_end_time = np.nan
         my_Cell_data=None
+        current_trace_synthetized_metadata=[]
+        stim_amp_pA_metadata=[]
+        
     elif database == 'Allen_Cell_Type_Database':
         stim_start_time = np.nan
         stim_end_time = np.nan
         my_Cell_data = ctc.get_ephys_data(cell_id)
+        current_trace_synthetized_metadata=[]
+        stim_amp_pA_metadata=[]
         
     elif database == "NVC":
-        stim_start_time = np.nan
-        stim_end_time = np.nan
+        NVC_database_trace_metadata=pd.read_pickle("/Volumes/Work_Julien/NVC_database/NVC_CC_sweep_Metadata_table.pkl")
+        
+        trace_metadata_sub_table=NVC_database_trace_metadata.loc[(NVC_database_trace_metadata['Cell_id'] == cell_id)&(NVC_database_trace_metadata['CC/DC'] == 'CC'),]
+        trace_metadata_sub_table=trace_metadata_sub_table.sort_values(by=["Protocol_number"])
+        current_trace_synthetized_metadata=[]
+        stim_start_time=[]
+        stim_end_time=[]
+        stim_amp_pA_metadata=[]
+        for protocol_number in np.array(trace_metadata_sub_table['Protocol_number']):
+            current_line=trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),:]
+            current_index=current_line.index.values[0]
+            current_trace_synthetized_metadata.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Current_trace_synthetized'][current_index].tolist()))
+            stim_start_time.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Stim_start_s'][current_index].tolist()))
+            stim_end_time.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Stim_end_s'][current_index].tolist()))
+            stim_amp_pA_metadata.append(list(trace_metadata_sub_table.loc[(trace_metadata_sub_table['Protocol_number']==protocol_number),'Stim_amp_pA'][current_index].tolist()))
+        
+        
         my_Cell_data = None
-
+    
     with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
         sweep_lines_dict = {executor.submit(parafunc.get_sweep_info_parallel, cell_Full_TPC_table, x,
-                                            cell_id, database, stim_start_time, stim_end_time,my_Cell_data): x for x in sweep_list}
+                                            cell_id, database, stim_start_time, stim_end_time,my_Cell_data,current_trace_synthetized_metadata,stim_amp_pA_metadata): x for x in sweep_list}
 
         for f in concurrent.futures.as_completed(sweep_lines_dict):
-            
+
             cell_sweep_info_table = pd.concat([
                 cell_sweep_info_table,f.result()], ignore_index=True)
 
@@ -1203,7 +1257,8 @@ def create_cell_sweep_info_table_concurrent_runs(cell_id, database, cell_Full_TP
     for current_Protocol in cell_sweep_info_table['Protocol_id'].unique():
         reduced_cell_sweep_info_table = cell_sweep_info_table[
             cell_sweep_info_table['Protocol_id'] == current_Protocol]
-        
+        reduced_cell_sweep_info_table=reduced_cell_sweep_info_table.astype({"Trace_id":"int"})
+        reduced_cell_sweep_info_table=reduced_cell_sweep_info_table.sort_values(by=['Trace_id'])
         BE_array = np.array(
             reduced_cell_sweep_info_table['Bridge_Error_GOhms'])
         sweep_array = np.array(reduced_cell_sweep_info_table['Sweep'])
@@ -1374,50 +1429,34 @@ def create_Full_SF_table(original_Full_TPC_table, original_Full_SF_dict):
     return Full_SF_table
 
 
-def data_pruning_I_O(stim_freq_table,cell_sweep_info_table):
-
+def data_pruning_I_O(stim_freq_table_init,cell_sweep_info_table):
+    stim_freq_table=stim_freq_table_init.copy()
+    stim_freq_table=stim_freq_table[stim_freq_table["Passed_QC"]==True]
     stim_freq_table = stim_freq_table.sort_values(
         by=['Stim_amp_pA', 'Frequency_Hz'])
     frequency_array = np.array(stim_freq_table.loc[:, 'Frequency_Hz'])
     obs = '-'
     do_fit = True
     
+    
     ## Test if max_freq_step/max_freq >.5
     
     
     non_zero_freq = frequency_array[np.where(frequency_array > 0)]
-    stim_array = np.array(stim_freq_table.loc[:, 'Stim_amp_pA'])
-    stim_array_diff = np.diff(stim_array)
-    freq_array_diff = np.diff(frequency_array)
-    normalized_step_array = freq_array_diff/stim_array_diff
+   
     if np.count_nonzero(frequency_array) < 4:
         obs = 'Less_than_4_response'
         do_fit = False
         return obs, do_fit  # , max_freq,max_freq_step,(max_freq_step/max_freq)
 
-    last_zero_index = np.flatnonzero(frequency_array)[0]
-    if last_zero_index != 0:
-
-        last_zero_index = np.flatnonzero(frequency_array)[0]-1
-    sub_stim_array = stim_array[last_zero_index:]
-    sub_freq_array = frequency_array[last_zero_index:]
-    sub_stim_diff = np.diff(sub_stim_array)
-    sub_freq_diff = np.diff(sub_freq_array)
-    sub_step_array = sub_freq_diff/sub_stim_diff
-
+    
     
     if len(np.unique(non_zero_freq)) < 3:
         obs = 'Less_than_3_different_frequencies'
         do_fit = False
         return obs, do_fit  # , max_freq,max_freq_step,(max_freq_step/max_freq)
 
-    
-    # max_freq_step_norm = stim_freq_max_freq_step_norm(stim_freq_table,do_plot=False)[0]
-    # if max_freq_step_norm >= .50:
-    #     obs = 'max_freq_step/max_freq>=0.5'
-    #     do_fit = False
-    #     return obs, do_fit  # , max_freq,max_freq_step,(max_freq_step/max_freq)
-
+   
     minimum_frequency_step = get_min_freq_step(stim_freq_table,do_plot=False)[0]
     if minimum_frequency_step >30:
         obs = 'Minimum_frequency_step_higher_than_30Hz'
@@ -1431,11 +1470,12 @@ def data_pruning_I_O(stim_freq_table,cell_sweep_info_table):
 
 
 
-def data_pruning_adaptation(original_SF_table, original_cell_sweep_info_table, response_time):
+def data_pruning_adaptation(original_SF_table, original_cell_sweep_info_table,sweep_QC_table_init, response_time):
     cell_sweep_info_table = original_cell_sweep_info_table.copy()
+    sweep_QC_table=sweep_QC_table_init.copy()
     SF_table = original_SF_table.copy()
     maximum_nb_interval = 0
-    sweep_list = np.array(SF_table.loc[:, "Sweep"])
+    sweep_list = np.array(sweep_QC_table[sweep_QC_table["Passed_QC"]==True]["Sweep"])
     for current_sweep in sweep_list:
 
         df = pd.DataFrame(SF_table.loc[current_sweep, 'SF'])
@@ -1471,48 +1511,6 @@ def coarse_or_fine_sweep(cell_id, stimulus_type="Long Square"):
     return(all_sweeps_table)
 
 
-def create_raw_trace_file(cell_id):
-    my_Cell_data = ctc.get_ephys_data(cell_id)
-    sweep_type = coarse_or_fine_sweep(cell_id)
-    sweep_type = sweep_type[sweep_type["stimulus_description"] == "COARSE"]
-    coarse_sweep_number = sweep_type.loc[:, "sweep_number"].values
-    raw_dataframe = pd.DataFrame(columns=[
-                                 'Sweep', 'Stim_start_s', 'Stim_end_s', 'Time_array', 'Potential_array', 'Current_array'])
-
-    for current_sweep in coarse_sweep_number:
-
-        index_range = my_Cell_data.get_sweep(current_sweep)["index_range"]
-
-        sampling_rate = my_Cell_data.get_sweep(current_sweep)["sampling_rate"]
-        current_stim_array = (my_Cell_data.get_sweep(current_sweep)[
-                              "stimulus"][0:index_range[1]+1]) * 1e12  # to pA
-        current_membrane_trace = (my_Cell_data.get_sweep(current_sweep)[
-                                  "response"][0:index_range[1]+1]) * 1e3  # to mV
-        current_membrane_trace = np.array(current_membrane_trace)
-        current_stim_array = np.array(current_stim_array)
-        stim_start_index = index_range[0]+next(x for x, val in enumerate(
-            current_stim_array[index_range[0]:]) if val != 0)
-        current_time_array = np.arange(
-            0, len(current_stim_array)) * (1.0 / sampling_rate)
-
-        stim_start_time = current_time_array[stim_start_index]
-        stim_end_time = stim_start_time+1.
-
-        cutoff_start_idx = find_time_index(
-            current_time_array, (stim_start_time-.1))
-        cutoff_end_idx = find_time_index(
-            current_time_array, (stim_end_time+.1))
-
-        current_stim_array = current_stim_array[cutoff_start_idx:cutoff_end_idx]
-        current_membrane_trace = current_membrane_trace[cutoff_start_idx:cutoff_end_idx]
-
-        new_line = pd.Series([current_sweep, stim_start_time, stim_end_time, sampling_rate, current_membrane_trace, current_stim_array],
-                             index=['Sweep', 'Stim_start_s', 'Stim_end_s', 'Time_array', 'Potential_array', 'Current_array'])
-
-        raw_dataframe = raw_dataframe.append(new_line, ignore_index=True)
-    raw_dataframe.to_pickle(
-        '/Volumes/easystore/Raw_traces/'+str(cell_id)+'_raw_traces.pkl')
-
 
 def find_time_index(t, t_0):
     """ Find the index value of a given time (t_0) in a time series (t).
@@ -1534,27 +1532,50 @@ def find_time_index(t, t_0):
     return idx
 
 
-def create_cell_sweep_QC_table(cell_sweep_info_table):
+def create_cell_sweep_QC_table(cell_sweep_info_table,cell_id, database):
 
-    pass_sweep_QC = True
-    sweep_QC_table = pd.DataFrame(columns=["Sweep", 'Passed_QC'])
+
+    sweep_QC_table = pd.DataFrame(columns=["Sweep", "Database_QC"])
+    QC_list=['Database_QC']
     sweep_id_list = cell_sweep_info_table.loc[:, 'Sweep']
     Cell_Rin = np.nanmean(
         np.array(cell_sweep_info_table.loc[:, 'Input_Resistance_MOhm']))
     Cell_Rin *= 1e-3  # convert Input resistance to GOhms
 
+    
+    if database == 'NVC':
+        NVC_database_trace_metadata=pd.read_pickle('/Volumes/Work_Julien/NVC_database/NVC_CC_sweep_Metadata_table.pkl')
+        trace_metadata_sub_table=NVC_database_trace_metadata.loc[(NVC_database_trace_metadata['Cell_id'] == cell_id)&(NVC_database_trace_metadata['CC/DC'] == 'CC'),]
+        trace_metadata_sub_table=trace_metadata_sub_table.sort_values(by=["Protocol_number"])
+        
     for sweep in sweep_id_list:
 
-        ### Absolute value of Bridge Error must be lower than 0.5*Rin ###
-        current_BE = cell_sweep_info_table.loc[sweep, 'Bridge_Error_GOhms']
-
-        if np.abs(current_BE) > .5*Cell_Rin:
-            pass_sweep_QC = False
-
-        sweep_line = pd.DataFrame([str(sweep), pass_sweep_QC]).T
         
-        sweep_line.columns=["Sweep", 'Passed_QC']
+        if database == "NVC":
+            _, protocol_number, trace_number=str(sweep).split('_')
+
+            
+            trace_acceptance_list = trace_metadata_sub_table.loc[trace_metadata_sub_table['Protocol_number']==int(protocol_number),:]
+            current_index=trace_acceptance_list.index.values[0]
+            trace_acceptance_list = trace_metadata_sub_table.loc[trace_metadata_sub_table['Protocol_number']==int(protocol_number),'Selected_Sweeps'][current_index].tolist()
+
+            if len(trace_acceptance_list)!=0:
+                
+                database_selected_trace = trace_acceptance_list[int(int(trace_number)-1)]
+            else:
+                database_selected_trace=True
+        else:
+            database_selected_trace = True
+
+
+        sweep_line = pd.DataFrame([str(sweep),database_selected_trace]).T
+        
+        sweep_line.columns=["Sweep","Database_QC"]
         sweep_QC_table=pd.concat([sweep_QC_table,sweep_line],ignore_index=True)
+    sweep_QC_table['Passed_QC']=True
+
+    for line in sweep_QC_table.index:
+        sweep_QC_table.loc[line,'Passed_QC']=sweep_QC_table.loc[line,QC_list].product()
         
 
     return sweep_QC_table
@@ -1564,8 +1585,7 @@ def create_SF_table(original_TPC_table, SF_dict):
     TPC_table = original_TPC_table.copy()
     feature_table = pd.DataFrame(columns=['Time_s', 'Membrane_potential_mV', 'Input_current_pA',
                                  'Potential_first_time_derivative_mV/s', 'Potential_second_time_derivative_mV/s/s', 'Feature'])
-    # TPC_table['Membrane_potential_mV']=np.array(filter_trace(TPC_table['Membrane_potential_mV'],
-    #                                                          TPC_table['Time_s'],filter=5.,do_plot=False))
+  
     for feature in SF_dict.keys():
         
         current_feature_table = TPC_table.loc[SF_dict[feature], :].copy()
@@ -1594,11 +1614,11 @@ def create_metadata_dict(cell_id, database, population_class, original_cell_swee
 
     Returns
     -------
-    metadata_table_dict : Dict
+    Metadata_table_dict : Dict
         DESCRIPTION.
 
     '''
-    metadata_table = pd.DataFrame(columns=["Database",
+    Metadata_table = pd.DataFrame(columns=["Database",
                                            "Area",
                                            "Layer",
                                            "Dendrite_type",
@@ -1656,55 +1676,17 @@ def create_metadata_dict(cell_id, database, population_class, original_cell_swee
                       "Dendrite_type",
                       'Nb_of_Traces',
                       'Nb_of_Protocol']
-    metadata_table=pd.concat([metadata_table,new_line],ignore_index=True)
+    Metadata_table=pd.concat([Metadata_table,new_line],ignore_index=True)
 
-    metadata_table_dict = metadata_table.loc[0, :].to_dict()
-    return metadata_table_dict
-
-
-def create_cell_json_file(cell_id, metadata_table, Full_TPC_table, Full_SF_table, Full_SF_dict, cell_sweep_info_table, cell_fit_table, cell_feature_table, Full_Adaptation_fit_table):
-    my_dict = {'Metadata': [metadata_table],
-               'TPC': [Full_TPC_table],
-               'Spike_feature_table': [Full_SF_table],
-               'Fit_table': [cell_fit_table],
-               'IO_table': [cell_feature_table]}
-
-    my_dict = pd.DataFrame(my_dict)
-    my_dict.to_json(
-        str('/Users/julienballbe/Downloads/Data_test_'+str(cell_id)+'.json'))
+    Metadata_table_dict = Metadata_table.loc[0, :].to_dict()
+    return Metadata_table_dict
 
 
-# def get_TPC_SF_table_concurrent_runs_bis(file, sweep):
-
-#     current_file = h5py.File(file, 'r')
-#     TPC_group = current_file['TPC_tables']
-#     current_TPC_table = TPC_group[str(sweep)]
-    
-#     # TPC_colnames = np.array([x.decode('ascii')
-#     #                         for x in list(TPC_group['TPC_colnames'])], dtype='str')
-#     TPC_colnames = list(TPC_group['TPC_colnames'])
-#     current_TPC_table = pd.DataFrame(current_TPC_table)
-#     current_TPC_table.columns = TPC_colnames
-    
-#     new_line_TPC = pd.Series(
-#         [str(sweep), current_TPC_table], index=['Sweep', 'TPC'])
-    
-    
-#     SF_group = current_file['SF_tables']
-#     current_SF_table = SF_group[str(sweep)]
-#     SF_dict = {}
-
-#     for feature in current_SF_table.keys():
-#         SF_dict[feature] = np.array(current_SF_table[feature])
-
-#     new_line_SF = pd.Series([str(sweep), SF_dict], index=['Sweep', 'SF_dict'])
-
-#     return new_line_TPC, new_line_SF
 
 
 def import_h5_file(file_path, selection=['All']):
 
-    current_file=h5py.File('/Volumes/Work_Julien/Cell_Data_File/Cell_170508AL258_1_data_file.h5', 'r')
+
     current_file = h5py.File(file_path, 'r')
 
     Full_TPC_table = pd.DataFrame()
@@ -1793,9 +1775,12 @@ def import_h5_file(file_path, selection=['All']):
         Sweep_QC_dict = {}
         for data in Sweep_QC_group.keys():
             Sweep_QC_dict[data] = Sweep_QC_group[data][()]
-
+        Sweep_QC_dict['Sweep']=Sweep_QC_dict['Sweep'].astype(str)
         Sweep_QC_table = pd.DataFrame(
             Sweep_QC_dict, index=Sweep_QC_dict['Sweep'])
+        for col in Sweep_QC_table.columns:
+            if col != 'Sweep':
+                Sweep_QC_table=Sweep_QC_table.astype({str(col):"bool"})
 
     elif 'Sweep_QC' in selection and 'Sweep_QC' not in current_file.keys():
         print('File does not contains Sweep_QC group')
@@ -1814,19 +1799,25 @@ def import_h5_file(file_path, selection=['All']):
                 Cell_fit_dict[data] = Cell_fit_group[data][()]
 
         cell_fit_table = pd.DataFrame(
-            Cell_fit_dict, index=Cell_fit_dict['Response_time_ms'])
+            Cell_fit_dict)
         cell_fit_table.index = cell_fit_table.index.astype(int)
 
         ## Cell_feature ##
 
         Cell_feature_group = current_file['Cell_Feature']
+        cell_feature_dict={}
+        for data in Cell_feature_group.keys():
+            if type(Cell_feature_group[data][(0)]) == bytes:
+                cell_feature_dict[data] = np.array(
+                    [x.decode('ascii') for x in Cell_feature_group[data][()]], dtype='str')
+            else:
+                cell_feature_dict[data] = Cell_feature_group[data][()]
+                
         cell_feature_table = pd.DataFrame(
-            Cell_feature_group['Cell_Feature_Table'])
-        cell_feature_table.columns = np.array([x.decode(
-            'ascii') for x in Cell_feature_group['Cell_Feature_Table_colnames'][()]], dtype='str')
-        cell_feature_table.index = cell_feature_table['Response_time_ms']
+            cell_feature_dict)
         cell_feature_table.index = cell_feature_table.index.astype(int)
 
+        
         
     elif 'Cell_Feature_Fit' in selection and 'Cell_Fit' not in current_file.keys():
         print('File does not contains Cell_Fit group')
@@ -1835,130 +1826,52 @@ def import_h5_file(file_path, selection=['All']):
     return Full_TPC_table, Full_SF_dict_table, Full_SF_table, Metadata_table, sweep_info_table, Sweep_QC_table, cell_fit_table, cell_feature_table
 
 
-# def filter_trace(table, cutoff_freq, do_plot=False):
-#     '''
-#     Apply a low pass filter on the stimulus trace 
-
-#     Parameters
-#     ----------
-#     table : DataFrame
-#         Stimulus trace table, 2 columns
-#         First column = 'Time_s'
-#         Second column = 'Input_current_pA'
-#     cutoff_freq : float
-#         Cut off frequency to use in the low pass filter in Hz.
-#     do_plot : Bool, optional
-#         The default is False.
-
-#     Returns
-#     -------
-#     table : DataFrame
-#         Stimulus trace table, 3 columns
-#         First column = 'Time_s'
-#         Second column = 'Input_current_pA'.
-#         Third column = "Filtered_Stimulus_trace_pA" --> filtered stimulus trace
-
-#     '''
-
-#     sampling_frequency = table.shape[0]/table.iloc[-1, 0]  # Hz
-
-#     b, a = scipy.signal.butter(3, Wn=cutoff_freq, fs=sampling_frequency)
-
-#     table['Filtered_Stimulus_trace_pA'] = scipy.signal.filtfilt(
-#         b, a, table.iloc[:, 1])
-
-#     if do_plot == True:
-#         myplot = ggplot(table, aes(x=table.iloc[:, 0], y=table.iloc[:, 1]))+geom_line(
-#             color='blue')+geom_line(table, aes(x=table.iloc[:, 0], y=table.iloc[:, 2]), color='red')
-#         myplot += ylim(0, 150)
-#         print(myplot)
-
-#     return table
 
 
-def estimate_cell_stim_time_limit_concurrent_runs(cell_id, database):
-
-    if database == "Lantyer_Database":
-
-        cell_sweep_stim_table=pd.read_pickle(
-            '/Users/julienballbe/My_Work/Lantyer_Data/Cell_Sweep_List_table_Lantyer.pkl')
-        cell_sweep_stim_table = cell_sweep_stim_table[cell_sweep_stim_table['Cell_id'] == cell_id]
-        sweep_list = np.array(cell_sweep_stim_table.iloc[0, -1])
-
-    Cell_stim_time_limit = pd.DataFrame(
-        columns=['Sweep', 'Stim_start_s', 'Stim_end_s'])
-    with concurrent.futures.ProcessPoolExecutor(max_workers=8) as executor:
-        sweep_lines_dict = {executor.submit(
-            parafunc.estimate_sweep_stim_time_limit_parallel, cell_id, x, database): x for x in sweep_list}
-        for f in concurrent.futures.as_completed(sweep_lines_dict):
-            Cell_stim_time_limit = Cell_stim_time_limit.append(
-                f.result(), ignore_index=True)
-
-    cell_stim_start = Cell_stim_time_limit['Stim_start_s'].mode()[0]
-    cell_stim_end = Cell_stim_time_limit['Stim_end_s'].mode()[0]
-
-    return cell_stim_start, cell_stim_end
-
-
-
-
-
-def estimate_cell_stim_onset(Full_TPC_table_original, do_plot=False):
+def estimate_trace_stim_limits(TPC_table_original,stimulus_duration,do_plot=False):
     '''
-    Compute from stimulus trace table the stimulus onset, and its duration by using autocorrelation
+    Estimate for a given trace the start time and end of the stimulus, by performing autocorrelation
 
     Parameters
     ----------
-    stim_table : DataFrame
-        Stimulus trace table, 2 columns
-        First column = 'Time_s'
-        Second column = 'Input_current_pA'
+    TPC_table_original : pd.DataFrame
+        Time-Potential-Current table.
+    stimulus_duration : float
+        duration of the stimulus in second.
+    do_plot : Bool, optional
+        Do plot. The default is False.
 
     Returns
     -------
-    best_autocorr : float
-        lowest autocorrelation coefficient encontered
     best_stim_start : float
-        Stimulus onset time point estimated from lowest autocorrelation coef (in s)
-    best_time_autocorr : float
-        Stimulus duration estimated from time shift used for best autocorrelation coefficient (in s)
+        Start time of the stimulus in second.
+    best_stim_end : float
+        End time of the stimulus in second.
 
     '''
+    
+    TPC_table=TPC_table_original.copy()
+    
 
-    Full_TPC_table = Full_TPC_table_original.copy()
-    stim_time_table = pd.DataFrame(
-        columns=['Sweep', 'Stim_start_s', 'Stim_end_s'])
-    for sweep in np.array(Full_TPC_table.loc[:, 'Sweep']):
-        
-        stim_table=get_filtered_TPC_table(Full_TPC_table,sweep,do_filter=True,filter=5.,do_plot=False)
-        
-        current_derivative = get_derivative(np.array(stim_table['Input_current_pA']),
-                                            np.array(stim_table['Time_s']))
-        current_derivative=np.insert(current_derivative,0,np.nan)
-        stim_table["Filtered_Stimulus_trace_derivative_pA/ms"]=np.array(current_derivative)
-        # remove last 50ms of signal (potential step)
-        limit = stim_table.shape[0] - \
-            int(0.05/(stim_table.iloc[1, 0]-stim_table.iloc[0, 0]))
+    current_derivative = get_derivative(np.array(TPC_table['Input_current_pA']),
+                                        np.array(TPC_table['Time_s']))
+    current_derivative=np.insert(current_derivative,0,np.nan)
+    TPC_table["Filtered_Stimulus_trace_derivative_pA/ms"]=np.array(current_derivative)
+    # remove last 50ms of signal (potential step)
+    limit = TPC_table.shape[0] - \
+        int(0.05/(TPC_table.iloc[1, 0]-TPC_table.iloc[0, 0]))
 
-        stim_table.loc[limit:,
-                       "Filtered_Stimulus_trace_derivative_pA/ms"] = np.nan
-        
-        stim_table = get_autocorrelation(stim_table, .500, do_plot=do_plot)
-        # best_time_autocorr=.500
-        #best_stim_start_index=next(x for x, val in enumerate(stim_table['Autocorrelation']) if np.abs(val) >= 10000 )
-        # best_stim_start=stim_table.iloc[best_stim_start_index,0]
-        best_stim_start = stim_table[stim_table['Autocorrelation'] == np.nanmin(
-            stim_table['Autocorrelation'])].iloc[0, 0]
+    TPC_table.loc[limit:,
+                   "Filtered_Stimulus_trace_derivative_pA/ms"] = np.nan
+    
+    TPC_table = get_autocorrelation(TPC_table, stimulus_duration, do_plot=do_plot)
+    
+    best_stim_start = TPC_table[TPC_table['Autocorrelation'] == np.nanmin(
+        TPC_table['Autocorrelation'])].iloc[0, 0]
 
-        stim_end = best_stim_start+.500
-        new_line = pd.Series([sweep, best_stim_start, stim_end], index=[
-                             'Sweep', 'Stim_start_s', 'Stim_end_s'])
-        stim_time_table = stim_time_table.append(new_line, ignore_index=True)
-
-
-    cell_stim_start = stim_time_table['Stim_start_s'].mode()[0]
-    cell_stim_end = stim_time_table['Stim_end_s'].mode()[0]
-    return cell_stim_start, cell_stim_end
+    best_stim_end = best_stim_start+stimulus_duration
+    
+    return best_stim_start, best_stim_end
 
 
 def get_autocorrelation(table, time_shift, do_plot=False):
@@ -2106,12 +2019,9 @@ def stim_freq_max_freq_step_norm(stim_freq_table,width=None,do_plot=False):
     
     
     
-        #n_bins = int((max(stim_freq_table["Stim_amp_pA"])-min(stim_freq_table["Stim_amp_pA"])) // width)
-        #print(starting_min_bin_edge,shift,elt,width)
-        #bin_edges = np.linspace(math.floor(min(stim_freq_table["Stim_amp_pA"]/ 100.00)) * 100, max(stim_freq_table["Stim_amp_pA"]), n_bins + 1)
-        #bin_edges = np.linspace(starting_min_bin_edge+shift, max(stim_freq_table["Stim_amp_pA"]), n_bins + 1)
+  
         bin_edges = np.arange(starting_min_bin_edge+shift, max(stim_freq_table["Stim_amp_pA"])+2*width, step = width)
-        #print(bin_edges)
+
         current_output,current_bin_edges,current_bins_number = scipy.stats.binned_statistic(stim_freq_table["Stim_amp_pA"],
                                         stim_freq_table["Frequency_Hz"],
                                         statistic='mean',
@@ -2205,10 +2115,13 @@ def filter_trace(value_trace, time_trace, filter=5., filter_order = 2, do_plot=F
     if filt_coeff < 0 or filt_coeff >= 1:
         raise ValueError("Butterworth coeff ({:f}) is outside of valid range [0,1]; cannot filter sampling frequency {:.1f} kHz with cutoff frequency {:.1f} kHz.".format(filt_coeff, sample_freq / 1e3, filter))
     b, a = scipy.signal.butter(filter_order, filt_coeff, "low")
-    
+
     zi = scipy.signal.lfilter_zi(b, a)
     
     filtered_signal =  scipy.signal.lfilter(b, a, value_trace,zi=zi*value_trace[0], axis=0)[0]
+    
+    
+   
     
     if do_plot:
         signal_df = pd.DataFrame({'Time_s':np.array(time_trace),
@@ -2228,6 +2141,19 @@ def filter_trace(value_trace, time_trace, filter=5., filter_order = 2, do_plot=F
         
     
     return filtered_signal
+
+
+
+def butter_lowpass(cutoff, nyq_freq, order=4):
+    normal_cutoff = float(cutoff) / nyq_freq
+    b, a = scipy.signal.butter(order, normal_cutoff, btype='lowpass')
+    return b, a
+
+def butter_lowpass_filter(data, cutoff_freq, nyq_freq, order=4):
+    # Source: https://github.com/guillaume-chevalier/filtering-stft-and-laplace-transform
+    b, a = butter_lowpass(cutoff_freq, nyq_freq, order=order)
+    y = scipy.signal.filtfilt(b, a, data)
+    return y
     
 def get_derivative(value_trace, time_trace):
     
@@ -2426,8 +2352,8 @@ def get_min_freq_step(original_stimulus_frequency_table,do_plot=False):
             trimmed_descending_segment = descending_segment[(descending_segment['Frequency_Hz'] >= (descending_segment_mean_freq-0.5*descending_segment_amplitude_freq)) & (descending_segment['Frequency_Hz'] <= (descending_segment_mean_freq+0.5*descending_segment_amplitude_freq))]
             
             max_freq_poly_fit=np.nanmax(trimmed_3rd_poly_table['Frequency_Hz'])
-            trimmed_ascending_segment['Legend']="Trimmed_asc_seg"
-            trimmed_descending_segment['Legend']="Trimmed_desc_seg"
+            trimmed_ascending_segment.loc[trimmed_ascending_segment.index,'Legend']="Trimmed_asc_seg"
+            trimmed_descending_segment.loc[trimmed_descending_segment.index,'Legend']="Trimmed_desc_seg"
            
         
         else:
@@ -2464,8 +2390,9 @@ def get_min_freq_step(original_stimulus_frequency_table,do_plot=False):
             trimmed_ascending_segment = ascending_segment[(ascending_segment['Frequency_Hz'] >= (ascending_segment_mean_freq-0.5*ascending_segment_amplitude_freq)) & (ascending_segment['Frequency_Hz'] <= (ascending_segment_mean_freq+0.5*ascending_segment_amplitude_freq))]
             max_freq_poly_fit=np.nanmax(trimmed_2nd_poly_table['Frequency_Hz'])
             
-            trimmed_2nd_poly_table['Legend']='2nd_order_poly'
-            trimmed_ascending_segment['Legend']="Trimmed_asc_seg"
+            
+            trimmed_2nd_poly_table.loc[trimmed_2nd_poly_table.index,'Legend']='2nd_order_poly'
+            trimmed_ascending_segment.loc[trimmed_ascending_segment.index,'Legend']="Trimmed_asc_seg"
             
         ### 2 - end 
         

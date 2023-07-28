@@ -26,7 +26,7 @@ import warnings
 import pandas
 
 import os
-from plotnine.scales import scale_y_continuous,ylim,xlim,scale_color_manual
+from plotnine.scales import scale_y_continuous,ylim,xlim,scale_color_manual,scale_color_brewer
 from plotnine.labels import xlab
 from sklearn.metrics import mean_squared_error
 
@@ -40,8 +40,27 @@ import h5py
 import glob
 from datetime import date
 import concurrent.futures
+import sklearn
+from sklearn.manifold import TSNE
 from multiprocessing import Pool
 import time
+from plotnine import (
+    ggplot,
+    aes,
+    scale_x_continuous,
+    geom_point,
+    facet_grid,
+    labs,
+    guide_legend,
+    guides,
+    theme,
+    element_text,
+    element_line,
+    element_rect,
+    theme_set,
+    theme_void,element_blank,theme_bw
+    
+)
 
 #%%
 
@@ -1857,9 +1876,138 @@ def _combine_and_interpolate(data):
 
     return np.hstack(output_list)
 
+def plot_cluster_characteristics(h5_file_path,cluster_id_table,do_plot=False):
+    
+    
+    h5_file=h5py.File(h5_file_path,'r')
+    h5_ids=pd.DataFrame(h5_file['ids'],dtype=float)
+    h5_ids=h5_ids.astype({0: 'int'})
+    h5_ids.columns=['Cell_id']
+    
+    first_ap_table=pd.DataFrame(h5_file['first_ap_v'],dtype=float)
+    first_ap_table.index=h5_ids['Cell_id']
+    h5_file.close()
+    average_cluster_wf=pd.DataFrame()
+    average_first_ap=first_ap_table.mean(axis=0)
+    new_line=pd.DataFrame(average_first_ap,columns=['Membrane_potential_mV'])
+    new_line['ms']=np.arange(0,0.009,1/50000)
+    new_line['Cluster']='Full_population'
+    average_cluster_wf=pd.concat([average_cluster_wf,new_line],axis=0,ignore_index=True)
+    for cluster_id in cluster_id_table['Cluster'].unique():
+        cluster_cell_id=cluster_id_table[cluster_id_table['Cluster']==cluster_id]['Cell_id']
+        sub_first_ap_df=first_ap_table.loc[cluster_cell_id,:]
+        cluster_average=sub_first_ap_df.mean(axis=0)
+        new_line=pd.DataFrame(cluster_average,columns=['Membrane_potential_mV'])
+        new_line['ms']=np.arange(0,0.009,1/50000)
+        new_line['Cluster']=cluster_id
+        average_cluster_wf=pd.concat([average_cluster_wf,new_line],axis=0,ignore_index=True)
+        print("cluster_id",cluster_id)
+    average_cluster_wf['Cluster']=average_cluster_wf['Cluster'].astype(str)
+    colors_dict = colors_dict = {"Exc_0":'#abf5ae',
+                   "Exc_1":'#6cf570',
+                   "Exc_2":"#13f01b",
+                   "Exc_3":"#03a309",
+                   "Exc_4":"#016604",
+                   "Exc_5":"#002902",
+                   
+                   "Inh_0":"#f5bfa4",
+                   "Inh_1":"#f56f2c",
+                   "Inh_2":"#f70b02",
+                   "Inh_3":"#9c5f41",
+                   "Inh_4":"#b01c02",
+                   "Inh_5":"#520602",
+                   "Full_population":"#7d7373"}
+    # for cluster in average_cluster_wf['Cluster'].unique():
+    #     if cluster == 'Full_population':
+    #         continue
+    #     else:
+    #         sub_table=average_cluster_wf[(average_cluster_wf['Cluster']=='Full_population')|(average_cluster_wf['Cluster']==cluster)]
+    #         ggplot()+geom_line(sub_table,aes(x='Time',y='Membrane_potential_mV',group="Cluster"))
+
+    for cluster in average_cluster_wf['Cluster'].unique():
+        if cluster == 'Full_population':
+            continue
+        else:
+            sub_table=average_cluster_wf[(average_cluster_wf['Cluster']=='Full_population')|(average_cluster_wf['Cluster']==cluster)]
+            sub_table['ms']*=1e3
+            sub_table['ms']-=6.
+            sub_table=sub_table[(sub_table["ms"]>=0)&(sub_table["ms"]<=2)]
+            my_plot=ggplot()+geom_line(sub_table,aes(x='ms',y='Membrane_potential_mV',group="Cluster",colour='Cluster'),size=.8)+scale_color_manual(values=colors_dict)
+            my_plot+=xlim(0.,2.-1/50000)
+            my_plot+=ylim(-60,60)
+            my_plot+=scale_x_continuous(breaks=[0,1,2])
+            my_plot+=theme(axis_text=element_text(size=5,weight='bold'),legend_entry_spacing_y=.00001,legend_text=element_text(size=5),axis_title=element_text(size=0, weight='bold'  ),
+                                                                                                                                                      panel_border=element_blank(),
+                                                                                                                                              panel_grid=element_blank(),
+                                                                                                                                              panel_grid_minor=element_blank(),
+                                                                                                                                              panel_background=element_blank(),
+                                                                                                                                              legend_key=element_rect(fill='white', alpha=.3,size=1),
+                                                                                                                                              legend_title=element_text(size=5),
+                                                                                                                                              #figure_size = (4.4, 2.8),
+                                                                                                                                              legend_background=element_rect(color="white", 
+                                                                                                                                                                             size=2, fill='white'))
+            my_plot.save(str('/Users/julienballbe/Downloads/First_ap_wf'+str(cluster)+".pdf"),height=.6,width=2)
+            print(my_plot)
+    return average_cluster_wf,my_plot
 
 
+def perform_t_sne(spca_results_exc,cell_clusters_exc,spca_results_inh,cell_clusters_inh,do_plot=False):
+    
+    ### t-SNE excitatory
+    
+    tsne = sklearn.manifold.TSNE(n_components=2, learning_rate='auto',
+                       init="pca", perplexity=25,random_state=0,n_iter=20000)
+    
+    tsne_exc = tsne.fit_transform(spca_results_exc)
+    tsne_exc_table=pd.DataFrame({"t-SNE1": tsne_exc[:, 0], "t-SNE2": tsne_exc[:, 1],'Cell_id':spca_results_exc.index}, index=spca_results_exc.index)
+    tsne_exc_table=pd.merge(tsne_exc_table,cell_clusters_exc,how='inner',on='Cell_id')
+    
+    tsne_exc_table=tsne_exc_table.astype({'Cluster':'category'})
+    
+    tsne_inh = tsne.fit_transform(spca_results_inh)
+    tsne_inh_table=pd.DataFrame({"t-SNE1": tsne_inh[:, 0], "t-SNE2": tsne_inh[:, 1],'Cell_id':spca_results_inh.index}, index=spca_results_inh.index)
+    tsne_inh_table=pd.merge(tsne_inh_table,cell_clusters_inh,how='inner',on='Cell_id')
+    tsne_inh_table=tsne_inh_table.astype({'Cluster':'category'})
+    
+    
+    
+    
+        
+    tsne_table=pd.concat([tsne_exc_table,tsne_inh_table],ignore_index=True)
+    tsne_table=tsne_table.astype({'Cluster':'category'})
+    if do_plot:
+        colors_dict = {"Exc_0":'#81f78c', "Exc_1":'#76e380',"Exc_2":"#69cf73","Exc_3":"#5ab062","Exc_4":"#468c4d","Exc_5":"#366b3b","Inh_0":"#fa9969","Inh_1":"#db875c","Inh_2":"#bd744f","Inh_3":"#f52702","Inh_4":"#7d4c33"}
+        tsne_plot=ggplot()+geom_point(tsne_table,aes(x="t-SNE1",y="t-SNE2",colour='Cluster'))+ scale_color_manual(values=colors_dict)+theme_bw()+theme(panel_border=element_blank(),panel_grid=element_blank(),panel_grid_minor=element_blank(),legend_background=element_rect(color="white", size=2, fill='white'))
+        #tsne_plot_inh=ggplot()+geom_point(tsne_inh_table,aes(x="t-SNE1",y="t-SNE2",colour='Cluster'))+scale_color_brewer(palette = "Oranges")
+        
+        print(tsne_plot)
+    return tsne_table,tsne_exc_table,tsne_inh_table
 
+def plot_tsne(tsne_table):
+    colors_dict = {"Exc_0":'#abf5ae',
+                   "Exc_1":'#6cf570',
+                   "Exc_2":"#13f01b",
+                   "Exc_3":"#03a309",
+                   "Exc_4":"#016604",
+                   "Exc_5":"#002902",
+                   
+                   "Inh_0":"#f5bfa4",
+                   "Inh_1":"#f56f2c",
+                   "Inh_2":"#f70b02",
+                   "Inh_3":"#9c5f41",
+                   "Inh_4":"#b01c02",
+                   "Inh_5":"#520602"}
+    my_plot=ggplot()+geom_point(tsne_table,aes(x="t-SNE1",y="t-SNE2",colour='Cluster'),size=.2)+ scale_color_manual(values=colors_dict)+theme(axis_text=element_text(size=5),legend_entry_spacing_y=.00001,legend_text=element_text(size=5),axis_title=element_text(size=5),
+                                                                                                                                              panel_border=element_blank(),
+                                                                                                                                      panel_grid=element_blank(),
+                                                                                                                                      panel_grid_minor=element_blank(),
+                                                                                                                                      panel_background=element_blank(),
+                                                                                                                                      legend_key=element_rect(fill='white', alpha=.3,size=1),
+                                                                                                                                      legend_title=element_text(size=5),
+                                                                                                                                      #figure_size = (4.4, 2.8),
+                                                                                                                                      legend_background=element_rect(color="white", 
+                                                                                                                                                                     size=2, fill='white'))
+    return my_plot
 
 
 
