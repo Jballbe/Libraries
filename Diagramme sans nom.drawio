@@ -1,4 +1,4 @@
-<mxfile host="app.diagrams.net" modified="2023-08-18T08:29:37.438Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5.2 Safari/605.1.15" etag="dttSQaBHA8ccWEv0K0fm" version="21.6.8" type="github">
+<mxfile host="app.diagrams.net" modified="2023-08-18T08:41:31.509Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.5.2 Safari/605.1.15" etag="35zlzgsiYoVxZG_gV2t7" version="21.6.8" type="github">
   <diagram name="Page-1" id="5d7acffa-a066-3a61-03fe-96351882024d">
     <mxGraphModel dx="1200" dy="846" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300" background="#ffffff" math="0" shadow="0">
       <root>
@@ -16,10 +16,10 @@
           <mxGeometry y="26" width="220" height="434" as="geometry" />
         </mxCell>
         <mxCell id="21ea969265ad0168-10" value="create_cell_Full_TPC_table_concurrent_runs" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e0e0e0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12" parent="1" vertex="1">
-          <mxGeometry x="560" y="74" width="280" height="460" as="geometry" />
+          <mxGeometry x="560" y="74" width="280" height="230" as="geometry" />
         </mxCell>
         <mxCell id="eZ_FUlZcvApQWRMvkOiT-1" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Create for a given cell Full_TPC_table. Calls concurrent runs with 8 cores to parralelize the process&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Output&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Full_TPC_table&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;" vertex="1" parent="21ea969265ad0168-10">
-          <mxGeometry y="26" width="280" height="434" as="geometry" />
+          <mxGeometry y="26" width="280" height="204" as="geometry" />
         </mxCell>
         <mxCell id="21ea969265ad0168-14" value="Function" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e0e0e0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12" parent="1" vertex="1">
           <mxGeometry x="10" y="534" width="160" height="110" as="geometry" />
@@ -184,6 +184,12 @@
             <Array as="points" />
             <mxPoint x="850" y="165" as="sourcePoint" />
           </mxGeometry>
+        </mxCell>
+        <mxCell id="eZ_FUlZcvApQWRMvkOiT-2" value="get_traces" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e0e0e0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=1;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12" vertex="1" parent="1">
+          <mxGeometry x="980" y="74" width="280" height="380" as="geometry" />
+        </mxCell>
+        <mxCell id="eZ_FUlZcvApQWRMvkOiT-3" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;sweep_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;current_trace_to_synthetized=[ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_start_synthetize = [ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_end_synthetize= [ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_amp_pA_synthtize= [ ]&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Create for a given cell Full_TPC_table. Calls concurrent runs with 8 cores to parralelize the process&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Output&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Full_TPC_table&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;" vertex="1" parent="eZ_FUlZcvApQWRMvkOiT-2">
+          <mxGeometry y="26" width="280" height="354" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
