@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" modified="2023-09-20T12:59:09.907Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15" etag="BIhi84yN5FUBcSdLhkJO" version="21.7.5" type="github">
+<mxfile host="app.diagrams.net" modified="2023-09-20T14:19:18.132Z" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15" etag="7B_HDSYUeUqagGv4p16e" version="21.7.5" type="github">
   <diagram name="Page-1" id="5d7acffa-a066-3a61-03fe-96351882024d">
-    <mxGraphModel dx="1433" dy="830" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300" background="#ffffff" math="0" shadow="0">
+    <mxGraphModel dx="1592" dy="922" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="4681" pageHeight="3300" background="#ffffff" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -13,31 +13,34 @@
           <mxGeometry y="26" width="220" height="434" as="geometry" />
         </mxCell>
         <mxCell id="21ea969265ad0168-10" value="create_cell_Full_TPC_table_concurrent_runs" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#a50141;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=6;fontFamily=Verdana;fontSize=12;fontColor=#ffffff;strokeColor=#A50040;perimeterSpacing=10;" parent="1" vertex="1">
-          <mxGeometry x="1210" y="460" width="560" height="740" as="geometry">
-            <mxRectangle x="1375" y="590" width="310" height="30" as="alternateBounds" />
+          <mxGeometry x="1180" y="460" width="610" height="878" as="geometry">
+            <mxRectangle x="1210" y="460" width="310" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="eZ_FUlZcvApQWRMvkOiT-1" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Create for a given cell Full_TPC_table. Calls concurrent runs with 8 cores to parralelize the process&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" parent="21ea969265ad0168-10" vertex="1">
-          <mxGeometry y="26" width="560" height="104" as="geometry" />
+        <mxCell id="eZ_FUlZcvApQWRMvkOiT-1" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Create for a given cell Full_TPC_table. Calls concurrent runs with 8 cores to parralelize the process per sweep&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Requires sweep list : 1 file per DB with sweep list for each cell&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;The sweep id must allow to go back to original file&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" parent="21ea969265ad0168-10" vertex="1">
+          <mxGeometry y="26" width="610" height="134" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-44" value="get_sweep_TPC_parallel" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#da0562;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=3;fontFamily=Verdana;fontSize=12;fontColor=#ffffff;strokeColor=#da0662;" parent="21ea969265ad0168-10" vertex="1">
-          <mxGeometry y="130" width="560" height="528" as="geometry">
-            <mxRectangle x="1410" y="720" width="310" height="30" as="alternateBounds" />
+          <mxGeometry y="160" width="610" height="678" as="geometry">
+            <mxRectangle y="160" width="610" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="u0cCmUGAslO2_DHjutZM-45" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;Function called in concurrent runs from &quot;create_cell_Full_TPC_table_concurrent_runs&quot; function.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;Create the TPC table for a given sweep&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" parent="u0cCmUGAslO2_DHjutZM-44" vertex="1">
-          <mxGeometry y="26" width="560" height="74" as="geometry" />
+        <mxCell id="u0cCmUGAslO2_DHjutZM-45" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;Input:&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;sweep_id,&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;database,&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;current_trace_to_synthetized=[ ],&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;stim_start_synthetize = [ ],&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;stim_end_synthetize= [ ],&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;stim_amp_pA_synthtize= [ ]&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color); font-weight: 400;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b style=&quot;border-color: var(--border-color);&quot;&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;Function called in concurrent runs from &quot;create_cell_Full_TPC_table_concurrent_runs&quot; function.&amp;nbsp;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;Create the TPC table for a given sweep&lt;/div&gt;&lt;/div&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" parent="u0cCmUGAslO2_DHjutZM-44" vertex="1">
+          <mxGeometry y="26" width="610" height="224" as="geometry" />
         </mxCell>
         <mxCell id="eZ_FUlZcvApQWRMvkOiT-2" value="get_traces" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=24;fillColor=#ed027e;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=4;fontFamily=Verdana;fontSize=12;fontColor=#ffffff;strokeColor=#ed027e;" parent="u0cCmUGAslO2_DHjutZM-44" vertex="1">
-          <mxGeometry y="100" width="560" height="338" as="geometry">
+          <mxGeometry y="250" width="610" height="338" as="geometry">
             <mxRectangle y="100" width="560" height="30" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="eZ_FUlZcvApQWRMvkOiT-3" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;sweep_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;current_trace_to_synthetized=[ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_start_synthetize = [ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_end_synthetize= [ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_amp_pA_synthtize= [ ]&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div&gt;Function to get sweep raw traces for a cell. This function is database dependant to account for the specificities of data structure of each database.&lt;/div&gt;&lt;div&gt;&amp;nbsp; &amp;nbsp; It returns time_trace, potential_trace, current_trace, stim_start_time, stim_end_time for a given sweep&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;if available in the DB, also returns stem_start_time and stim_end_time&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Output (get_traces)&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;time_trace, potential_trace, current_trace, stim_start_time, stim_end_time&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" parent="eZ_FUlZcvApQWRMvkOiT-2" vertex="1">
-          <mxGeometry y="24" width="560" height="314" as="geometry" />
+        <mxCell id="eZ_FUlZcvApQWRMvkOiT-3" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;sweep_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;current_trace_to_synthetized=[ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_start_synthetize = [ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_end_synthetize= [ ],&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;stim_amp_pA_synthtize= [ ]&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div&gt;Function to get sweep raw traces for a cell. This function is database dependant to account for the specificities of data structure of each database.&lt;/div&gt;&lt;div&gt;It returns time_trace, potential_trace, current_trace, stim_start_time, stim_end_time for a given sweep&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;if available in the DB, also returns stem_start_time and stim_end_time&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Output (get_traces)&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;time_trace, potential_trace, current_trace, stim_start_time, stim_end_time&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" parent="eZ_FUlZcvApQWRMvkOiT-2" vertex="1">
+          <mxGeometry y="24" width="610" height="314" as="geometry" />
         </mxCell>
         <mxCell id="0zWNYZzOo4w-1fPx7plv-2" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b&gt;If needed, estimates stim_start_time and stim_end_time&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b&gt;Output (get_Sweep_TPC_parallel)&lt;/b&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;pd.Series([sweep,TPC])&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" vertex="1" parent="u0cCmUGAslO2_DHjutZM-44">
-          <mxGeometry y="438" width="560" height="90" as="geometry" />
+          <mxGeometry y="588" width="610" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-4" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b&gt;Output (&amp;nbsp;create_cell_Full_TPC_table_concurrent_runs)&lt;/b&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Full_TPC_table&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" vertex="1" parent="21ea969265ad0168-10">
+          <mxGeometry y="838" width="610" height="40" as="geometry" />
         </mxCell>
         <mxCell id="21ea969265ad0168-18" value="Function" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#e0e0e0;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=1;fontFamily=Verdana;fontSize=12" parent="1" vertex="1">
           <mxGeometry x="170" y="1040" width="160" height="140" as="geometry" />
@@ -190,93 +193,95 @@
             <mxPoint x="850" y="165" as="sourcePoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="u0cCmUGAslO2_DHjutZM-42" style="edgeStyle=none;shape=connector;rounded=1;hachureGap=4;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.461;entryY=0.009;entryDx=0;entryDy=0;entryPerimeter=0;labelBackgroundColor=default;strokeColor=default;fontFamily=Helvetica;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=12;fontColor=default;endArrow=classic;" parent="1" source="u0cCmUGAslO2_DHjutZM-21" target="21ea969265ad0168-10" edge="1">
-          <mxGeometry relative="1" as="geometry" />
-        </mxCell>
-        <mxCell id="u0cCmUGAslO2_DHjutZM-21" value="Full_TPC_Table" style="swimlane;whiteSpace=wrap;html=1;rounded=1;fontFamily=Helvetica;fontSize=12;fillColor=#647687;strokeColor=#314354;fontColor=#ffffff;labelBackgroundColor=none;labelBorderColor=none;fillStyle=auto;swimlaneFillColor=default;" parent="1" vertex="1">
-          <mxGeometry x="1360" y="22" width="360" height="420" as="geometry">
-            <mxRectangle x="1360" y="30" width="140" height="30" as="alternateBounds" />
+        <mxCell id="u0cCmUGAslO2_DHjutZM-42" style="edgeStyle=none;shape=connector;rounded=1;hachureGap=4;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=1;exitDx=0;exitDy=0;labelBackgroundColor=default;strokeColor=default;fontFamily=Helvetica;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=12;fontColor=default;endArrow=classic;entryX=0.506;entryY=0.009;entryDx=0;entryDy=0;entryPerimeter=0;" parent="1" source="u0cCmUGAslO2_DHjutZM-21" target="21ea969265ad0168-10" edge="1">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1515" y="450" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="u0cCmUGAslO2_DHjutZM-7" value="Fulll_TPC_table" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;strokeColor=default;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;fillColor=none;gradientColor=none;html=1;" parent="u0cCmUGAslO2_DHjutZM-21" vertex="1">
-          <mxGeometry y="150" width="340" height="110" as="geometry" />
+        <mxCell id="u0cCmUGAslO2_DHjutZM-21" value="Full_TPC_Table" style="swimlane;whiteSpace=wrap;html=1;rounded=1;fontFamily=Helvetica;fontSize=12;fillColor=#647687;strokeColor=#314354;fontColor=#ffffff;labelBackgroundColor=none;labelBorderColor=none;fillStyle=auto;swimlaneFillColor=default;" parent="1" vertex="1">
+          <mxGeometry x="1210" width="560" height="420" as="geometry">
+            <mxRectangle x="1210" width="140" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="u0cCmUGAslO2_DHjutZM-7" value="Full_TPC_table" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;strokeColor=default;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;fillColor=none;gradientColor=none;html=1;" parent="u0cCmUGAslO2_DHjutZM-21" vertex="1">
+          <mxGeometry y="150" width="560" height="110" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-8" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;html=1;" parent="u0cCmUGAslO2_DHjutZM-7" vertex="1">
-          <mxGeometry y="30" width="340" height="40" as="geometry" />
+          <mxGeometry y="30" width="560" height="40" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-9" value="Index" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-8" vertex="1">
-          <mxGeometry width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-10" value="Sweep" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-8" vertex="1">
-          <mxGeometry x="113" width="114" height="40" as="geometry">
-            <mxRectangle width="114" height="40" as="alternateBounds" />
+          <mxGeometry x="186" width="188" height="40" as="geometry">
+            <mxRectangle width="188" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-11" value="TPC" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-8" vertex="1">
-          <mxGeometry x="227" width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry x="374" width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-12" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;html=1;" parent="u0cCmUGAslO2_DHjutZM-7" vertex="1">
-          <mxGeometry y="70" width="340" height="40" as="geometry" />
+          <mxGeometry y="70" width="560" height="40" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-13" value="str" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-12" vertex="1">
-          <mxGeometry width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-14" value="str" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-12" vertex="1">
-          <mxGeometry x="113" width="114" height="40" as="geometry">
-            <mxRectangle width="114" height="40" as="alternateBounds" />
+          <mxGeometry x="186" width="188" height="40" as="geometry">
+            <mxRectangle width="188" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-15" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;pd.DataFrame&lt;/font&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=#3A5431;overflow=hidden;fillColor=#6d8764;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=#ffffff;" parent="u0cCmUGAslO2_DHjutZM-12" vertex="1">
-          <mxGeometry x="227" width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry x="374" width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-23" value="&lt;b&gt;Pd.DataFrame&lt;/b&gt;&lt;br&gt;Dataframe containing all raw traces for a given cell&lt;br&gt;One row per sweep&lt;br&gt;Each row contains sweep_id, and TPC table&lt;br&gt;Row Index are set to sweep_id (to allow the use of df.loc[sweep,&#39;TPC&#39;] to get to sweep-TPC" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;" parent="u0cCmUGAslO2_DHjutZM-21" vertex="1">
           <mxGeometry y="30" width="340" height="130" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-25" value="TPC" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;strokeColor=#3A5431;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=#ffffff;fillColor=#6d8764;html=1;" parent="u0cCmUGAslO2_DHjutZM-21" vertex="1">
-          <mxGeometry y="300" width="340" height="110" as="geometry" />
+          <mxGeometry y="300" width="560" height="110" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-26" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;html=1;" parent="u0cCmUGAslO2_DHjutZM-25" vertex="1">
-          <mxGeometry y="30" width="340" height="40" as="geometry" />
+          <mxGeometry y="30" width="560" height="40" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-27" value="Time&lt;span style=&quot;white-space: pre;&quot;&gt;_s&lt;/span&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-26" vertex="1">
-          <mxGeometry width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-28" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;Membrane_potential_mV&lt;/font&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-26" vertex="1">
-          <mxGeometry x="113" width="114" height="40" as="geometry">
-            <mxRectangle width="114" height="40" as="alternateBounds" />
+          <mxGeometry x="186" width="188" height="40" as="geometry">
+            <mxRectangle width="188" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-29" value="Input_current_pA" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=13;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-26" vertex="1">
-          <mxGeometry x="227" width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry x="374" width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-30" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;html=1;" parent="u0cCmUGAslO2_DHjutZM-25" vertex="1">
-          <mxGeometry y="70" width="340" height="40" as="geometry" />
+          <mxGeometry y="70" width="560" height="40" as="geometry" />
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-31" value="float" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-30" vertex="1">
-          <mxGeometry width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-32" value="float" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" parent="u0cCmUGAslO2_DHjutZM-30" vertex="1">
-          <mxGeometry x="113" width="114" height="40" as="geometry">
-            <mxRectangle width="114" height="40" as="alternateBounds" />
+          <mxGeometry x="186" width="188" height="40" as="geometry">
+            <mxRectangle width="188" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-33" value="&lt;font style=&quot;font-size: 12px;&quot;&gt;float&lt;/font&gt;" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;overflow=hidden;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;strokeColor=#000000;" parent="u0cCmUGAslO2_DHjutZM-30" vertex="1">
-          <mxGeometry x="227" width="113" height="40" as="geometry">
-            <mxRectangle width="113" height="40" as="alternateBounds" />
+          <mxGeometry x="374" width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
           </mxGeometry>
         </mxCell>
         <mxCell id="u0cCmUGAslO2_DHjutZM-40" value="" style="endArrow=classic;html=1;hachureGap=4;fontFamily=Helvetica;fontSource=https%3A%2F%2Ffonts.googleapis.com%2Fcss%3Ffamily%3DArchitects%2BDaughter;fontSize=12;fontColor=default;exitX=0.844;exitY=0.95;exitDx=0;exitDy=0;exitPerimeter=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" parent="u0cCmUGAslO2_DHjutZM-21" source="u0cCmUGAslO2_DHjutZM-12" target="u0cCmUGAslO2_DHjutZM-25" edge="1">
@@ -285,8 +290,66 @@
             <mxPoint x="-290" y="430" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="0zWNYZzOo4w-1fPx7plv-4" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b&gt;Output (&amp;nbsp;create_cell_Full_TPC_table_concurrent_runs)&lt;/b&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Full_TPC_table&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" vertex="1" parent="1">
-          <mxGeometry x="1210" y="1140" width="560" height="40" as="geometry" />
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-5" value="cell_sweep_info_table" style="swimlane;whiteSpace=wrap;html=1;rounded=1;fontFamily=Helvetica;fontSize=12;fillColor=#647687;strokeColor=#314354;fontColor=#ffffff;labelBackgroundColor=none;labelBorderColor=none;fillStyle=auto;swimlaneFillColor=default;" vertex="1" parent="1">
+          <mxGeometry x="1980" width="560" height="270" as="geometry">
+            <mxRectangle x="1360" y="30" width="140" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-6" value="cell_sweep_info_table" style="shape=table;startSize=30;container=1;collapsible=0;childLayout=tableLayout;strokeColor=default;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;fillColor=none;gradientColor=none;html=1;columnLines=1;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-5">
+          <mxGeometry y="150" width="560" height="110" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-7" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;html=1;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-6">
+          <mxGeometry y="30" width="560" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-8" value="Index" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-7">
+          <mxGeometry width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-9" value="Sweep" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-7">
+          <mxGeometry x="186" width="188" height="40" as="geometry">
+            <mxRectangle width="188" height="40" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-10" value="TPC" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-7">
+          <mxGeometry x="374" width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-11" value="" style="shape=tableRow;horizontal=0;startSize=0;swimlaneHead=0;swimlaneBody=0;strokeColor=inherit;top=0;left=0;bottom=0;right=0;collapsible=0;dropTarget=0;fillColor=none;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;html=1;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-6">
+          <mxGeometry y="70" width="560" height="40" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-12" value="str" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-11">
+          <mxGeometry width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-13" value="str" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=inherit;overflow=hidden;fillColor=none;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=default;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-11">
+          <mxGeometry x="186" width="188" height="40" as="geometry">
+            <mxRectangle width="188" height="40" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-14" value="" style="shape=partialRectangle;html=1;whiteSpace=wrap;connectable=0;strokeColor=#3A5431;overflow=hidden;fillColor=#ffffff;top=0;left=0;bottom=0;right=0;pointerEvents=1;fontSize=16;rounded=1;fontFamily=Helvetica;fontColor=#ffffff;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-11">
+          <mxGeometry x="374" width="186" height="40" as="geometry">
+            <mxRectangle width="186" height="40" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-15" value="&lt;b&gt;Pd.DataFrame&lt;/b&gt;&lt;br&gt;Dataframe containing for each trace different information&lt;br&gt;&lt;br&gt;protocol id; sweep_id; stimulus parameters (holding current, &amp;nbsp;stimulus amplitude...), stimulus start and end time&lt;br&gt;bridge Error estimation; time_cst; ; Input Resistance..." style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;rounded=0;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-5">
+          <mxGeometry y="30" width="560" height="130" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-50" value="create_cell_sweep_info_table_concurrent_runs" style="swimlane;html=1;fontStyle=0;childLayout=stackLayout;horizontal=1;startSize=26;fillColor=#a50141;horizontalStack=0;resizeParent=1;resizeLast=0;collapsible=1;marginBottom=0;swimlaneFillColor=#ffffff;align=center;rounded=0;shadow=0;comic=0;labelBackgroundColor=none;strokeWidth=6;fontFamily=Verdana;fontSize=12;fontColor=#ffffff;strokeColor=#A50040;perimeterSpacing=10;direction=east;" vertex="1" parent="1">
+          <mxGeometry x="2030" y="480" width="610" height="800" as="geometry">
+            <mxRectangle x="1210" y="460" width="310" height="30" as="alternateBounds" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-51" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Input&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;cell_id,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;database,&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Full_TPC_table&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;b&gt;Description&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Create for a given cell cell_sweep_info_table. Calls concurrent runs with 8 cores to parralelize the process per sweep&lt;b&gt;&lt;br&gt;&lt;/b&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Requires sweep list : 1 file per DB with sweep list for each cell&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;The sweep id must allow to go back to original file&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-50">
+          <mxGeometry y="26" width="610" height="214" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-58" value="Vertical Container" style="swimlane;whiteSpace=wrap;html=1;rounded=0;shadow=0;labelBackgroundColor=none;comic=0;strokeColor=#da0662;strokeWidth=3;fontFamily=Verdana;fontSize=12;fontColor=#ffffff;startSize=26;fillColor=#da0562;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-50">
+          <mxGeometry y="240" width="610" height="200" as="geometry" />
+        </mxCell>
+        <mxCell id="0zWNYZzOo4w-1fPx7plv-57" value="&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;div style=&quot;border-color: var(--border-color);&quot;&gt;&lt;b&gt;Output (&amp;nbsp;create_cell_Full_TPC_table_concurrent_runs)&lt;/b&gt;&lt;br&gt;&lt;/div&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;Full_TPC_table&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;&lt;div style=&quot;font-size: 12px;&quot;&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;strokeColor=none;fillColor=none;spacingLeft=4;spacingRight=4;whiteSpace=wrap;overflow=hidden;rotatable=0;points=[[0,0.5],[1,0.5]];portConstraint=eastwest;spacingTop=1;spacing=2;fontSize=12;rounded=0;" vertex="1" parent="0zWNYZzOo4w-1fPx7plv-50">
+          <mxGeometry y="440" width="610" height="40" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
